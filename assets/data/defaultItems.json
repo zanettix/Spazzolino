@@ -1,0 +1,84 @@
+{
+  "defaultItems": [
+    {
+      "name": "Spazzolino da denti",
+      "category": "igiene_personale",
+      "duration_days": 105,
+      "description": "Raccomandazione dell'American Dental Association per mantenere efficacia delle setole e igiene orale ottimale",
+      "link": "https://www.ada.org/en/member-center/oral-health-topics/toothbrushes",
+      "icon": "toothbrush"
+    },
+    {
+      "name": "Rasoi usa e getta",
+      "category": "igiene_personale", 
+      "duration_days": 14,
+      "description": "Sostituire ogni 5-7 utilizzi per mantenere efficacia di rasatura e prevenire irritazioni cutanee",
+      "link": "https://www.mayoclinic.org/healthy-lifestyle/adult-health/in-depth/shaving/art-20044364",
+      "icon": "razor"
+    },
+    {
+      "name": "Lenti a contatto",
+      "category": "igiene_personale",
+      "duration_days": 30,
+      "description": "Seguire sempre la prescrizione dell'oculista per evitare infezioni e danni oculari",
+      "link": "https://www.aao.org/eye-health/tips-prevention/contact-lens-care",
+      "icon": "contact-lens"
+    },
+    {
+      "name": "Asciugamani da bagno",
+      "category": "igiene_personale",
+      "duration_days": 547,
+      "description": "Sostituire ogni 1-2 anni quando perdono assorbenza e morbidezza nonostante i lavaggi",
+      "link": "https://www.goodhousekeeping.com/home/cleaning/a20705747/how-often-replace-towels/",
+      "icon": "towel"
+    },
+    {
+      "name": "Spazzola WC",
+      "category": "bagno",
+      "duration_days": 180,
+      "description": "Sostituire ogni 6 mesi per mantenere standard igienici adeguati nel bagno",
+      "link": "https://www.healthline.com/health/how-often-should-you-replace-toilet-brush",
+      "icon": "toilet-brush"
+    },
+    {
+      "name": "Spugne da cucina",
+      "category": "cucina",
+      "duration_days": 10,
+      "description": "Sostituire ogni 1-2 settimane per prevenire proliferazione batterica estremamente alta negli ambienti umidi",
+      "link": "https://www.fda.gov/food/people-risk-foodborne-illness/kitchen-sponges-wipe-out-salmonella",
+      "icon": "sponge"
+    },
+    {
+      "name": "Filtro cappa aspirante",
+      "category": "cucina",
+      "duration_days": 135,
+      "description": "Sostituire ogni 3-6 mesi per mantenere efficienza di aspirazione dei fumi e odori di cottura",
+      "link": "https://www.consumerreports.org/range-hoods/how-to-clean-range-hood-filters/",
+      "icon": "air-filter"
+    },
+    {
+      "name": "Tagliere",
+      "category": "cucina",
+      "duration_days": 547,
+      "description": "Sostituire ogni 1-2 anni quando presenta graffi profondi che possono ospitare batteri pericolosi",
+      "link": "https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/cutting-boards-and-food-safety",
+      "icon": "cutting-board"
+    },
+    {
+      "name": "Biancheria intima",
+      "category": "igiene_personale",
+      "duration_days": 274,
+      "description": "Sostituire ogni 6-12 mesi quando perde elasticità e forma, compromettendo comfort e igiene",
+      "link": "https://www.healthline.com/health/how-often-should-you-replace-underwear",
+      "icon": "underwear"
+    },
+    {
+      "name": "Infradito",
+      "category": "igiene_personale",
+      "duration_days": 274,
+      "description": "Sostituire ogni 6-12 mesi per mantenere igiene dei piedi e supporto plantare adeguato",
+      "link": "https://www.podiatrytoday.com/when-replace-your-flip-flops",
+      "icon": "flip-flops"
+    }
+  ]
+}
