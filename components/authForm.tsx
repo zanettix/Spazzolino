@@ -1,33 +1,36 @@
-// components/authWrapper.tsx
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
 
-interface AuthWrapperProps {
+interface AuthFormProps {
   children: React.ReactNode;
   requireAuth?: boolean;
-  fallbackMessage?: string;
+  showCancelButton?: boolean; // Nuovo prop per controllare il bottone annulla
+  onCancel?: () => void;
 }
 
-export default function AuthWrapper({ 
+export default function AuthForm({ 
   children, 
-  requireAuth = true, 
-  fallbackMessage = "Accedi per utilizzare questa funzione" 
-}: AuthWrapperProps) {
+  requireAuth = true,
+  showCancelButton = false, // Default false
+  onCancel
+}: AuthFormProps) {
   const { user, loading, signIn, signUp } = useAuth();
+  const router = useRouter();
   
-  // Stati per la form di autenticazione
+  // Stati UI
   const [isLogin, setIsLogin] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -35,15 +38,12 @@ export default function AuthWrapper({
     password: '',
     nickname: ''
   });
-  const [errors, setErrors] = useState<{[key: string]: string}>({});
 
-  // Mostra loading durante il controllo iniziale della sessione
+  // Loading iniziale
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-primary-500 justify-center items-center">
-        <Text className="text-white text-3xl font-bold mb-4">
-          Spazzolino
-        </Text>
+        <Text className="text-white text-3xl font-bold mb-4">Spazzolino</Text>
         <Text className="text-primary-100 text-center mb-6">
           La tua salute e igiene quotidiana
         </Text>
@@ -52,41 +52,14 @@ export default function AuthWrapper({
     );
   }
 
-  // Se l'utente è autenticato o l'auth non è richiesta, mostra il contenuto
+  // Se autenticato, mostra contenuto
   if (!requireAuth || user) {
     return <>{children}</>;
   }
 
-  // Funzioni di validazione e gestione form
-  const validateForm = () => {
-    const newErrors: {[key: string]: string} = {};
-    
-    if (!formData.email) {
-      newErrors.email = 'Email è richiesta';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email non valida';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password è richiesta';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password deve essere di almeno 6 caratteri';
-    }
-
-    if (!isLogin && !formData.nickname) {
-      newErrors.nickname = 'Nickname è richiesto';
-    } else if (!isLogin && formData.nickname.length < 2) {
-      newErrors.nickname = 'Nickname deve essere di almeno 2 caratteri';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleSubmit = async () => {
-    if (!validateForm()) return;
-
     setAuthLoading(true);
+    
     try {
       if (isLogin) {
         await signIn({
@@ -113,20 +86,7 @@ export default function AuthWrapper({
           resetForm();
           return;
         }
-        
-        switch (error.message) {
-          case 'Invalid login credentials':
-            errorMessage = 'Email o password non corretti';
-            break;
-          case 'User already registered':
-            errorMessage = 'Questo indirizzo email è già registrato';
-            break;
-          case 'Email not confirmed':
-            errorMessage = 'Conferma il tuo indirizzo email prima di accedere';
-            break;
-          default:
-            errorMessage = error.message;
-        }
+        errorMessage = error.message;
       }
       
       Alert.alert('Errore', errorMessage);
@@ -135,9 +95,24 @@ export default function AuthWrapper({
     }
   };
 
+  const handleCancel = () => {
+    if (onCancel) {
+      // Se c'è una callback personalizzata, usala
+      onCancel();
+    } else {
+      // Comportamento default: torna indietro nella navigazione
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        // Se non può tornare indietro, vai alla home
+        router.replace('/(tabs)');
+      }
+    }
+    resetForm();
+  };
+
   const resetForm = () => {
     setFormData({ email: '', password: '', nickname: '' });
-    setErrors({});
   };
 
   const handleToggleMode = () => {
@@ -148,16 +123,8 @@ export default function AuthWrapper({
 
   const updateField = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
   };
 
-  // Renderizza la schermata di autenticazione
   return (
     <SafeAreaView className="flex-1 bg-neutral-50">
       <KeyboardAvoidingView 
@@ -182,7 +149,8 @@ export default function AuthWrapper({
           {/* Main Content */}
           <View className="flex-1 px-6 py-8">
             <View className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-              {/* Toggle Buttons - SEMPLIFICATO */}
+              
+              {/* Toggle Buttons */}
               <View className="flex-row bg-neutral-100 rounded-xl p-1 mb-8">
                 <TouchableOpacity
                   style={{
@@ -230,9 +198,7 @@ export default function AuthWrapper({
                     Nickname
                   </Text>
                   <TextInput
-                    className={`border rounded-xl px-4 py-4 bg-neutral-50 ${
-                      errors.nickname ? 'border-red-500' : 'border-neutral-200'
-                    }`}
+                    className="border border-neutral-200 rounded-xl px-4 py-4 bg-neutral-50"
                     placeholder="Il tuo nickname"
                     value={formData.nickname}
                     onChangeText={(value) => updateField('nickname', value)}
@@ -240,22 +206,13 @@ export default function AuthWrapper({
                     editable={!authLoading}
                     maxLength={30}
                   />
-                  {errors.nickname && (
-                    <Text className="text-red-500 text-sm mt-1">
-                      {errors.nickname}
-                    </Text>
-                  )}
                 </View>
               )}
 
               <View className="mb-5">
-                <Text className="text-neutral-700 font-medium mb-2">
-                  Email
-                </Text>
+                <Text className="text-neutral-700 font-medium mb-2">Email</Text>
                 <TextInput
-                  className={`border rounded-xl px-4 py-4 bg-neutral-50 ${
-                    errors.email ? 'border-red-500' : 'border-neutral-200'
-                  }`}
+                  className="border border-neutral-200 rounded-xl px-4 py-4 bg-neutral-50"
                   placeholder="la.tua@email.com"
                   value={formData.email}
                   onChangeText={(value) => updateField('email', value)}
@@ -264,21 +221,12 @@ export default function AuthWrapper({
                   autoComplete="email"
                   editable={!authLoading}
                 />
-                {errors.email && (
-                  <Text className="text-red-500 text-sm mt-1">
-                    {errors.email}
-                  </Text>
-                )}
               </View>
 
               <View className="mb-6">
-                <Text className="text-neutral-700 font-medium mb-2">
-                  Password
-                </Text>
+                <Text className="text-neutral-700 font-medium mb-2">Password</Text>
                 <TextInput
-                  className={`border rounded-xl px-4 py-4 bg-neutral-50 ${
-                    errors.password ? 'border-red-500' : 'border-neutral-200'
-                  }`}
+                  className="border border-neutral-200 rounded-xl px-4 py-4 bg-neutral-50"
                   placeholder="La tua password"
                   value={formData.password}
                   onChangeText={(value) => updateField('password', value)}
@@ -286,68 +234,60 @@ export default function AuthWrapper({
                   autoComplete="password"
                   editable={!authLoading}
                 />
-                {errors.password && (
-                  <Text className="text-red-500 text-sm mt-1">
-                    {errors.password}
-                  </Text>
-                )}
               </View>
 
-              {/* Submit Button */}
-              <TouchableOpacity
-                style={{
-                  paddingVertical: 16,
-                  borderRadius: 12,
-                  marginBottom: 16,
-                  backgroundColor: authLoading ? '#d1d5db' : '#3b82f6'
-                }}
-                onPress={handleSubmit}
-                disabled={authLoading}
-              >
-                {authLoading ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <Text style={{
-                    color: 'white',
-                    fontWeight: '600',
-                    textAlign: 'center',
-                    fontSize: 18
-                  }}>
-                    {isLogin ? 'Accedi' : 'Registrati'}
-                  </Text>
+              {/* Action Buttons */}
+              <View className={`flex-row ${showCancelButton ? 'space-x-3' : ''}`}>
+                {/* Submit Button */}
+                <TouchableOpacity
+                  style={{
+                    flex: showCancelButton ? 2 : 1,
+                    paddingVertical: 16,
+                    borderRadius: 12,
+                    backgroundColor: authLoading ? '#d1d5db' : '#3b82f6'
+                  }}
+                  onPress={handleSubmit}
+                  disabled={authLoading}
+                >
+                  {authLoading ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text style={{
+                      color: 'white',
+                      fontWeight: '600',
+                      textAlign: 'center',
+                      fontSize: 18
+                    }}>
+                      {isLogin ? 'Accedi' : 'Registrati'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+
+                {/* Cancel Button - Solo se showCancelButton è true */}
+                {showCancelButton && (
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      paddingVertical: 16,
+                      borderRadius: 12,
+                      borderWidth: 2,
+                      borderColor: '#e5e5e5',
+                      backgroundColor: 'white'
+                    }}
+                    onPress={handleCancel}
+                    disabled={authLoading}
+                  >
+                    <Text style={{
+                      color: '#737373',
+                      fontWeight: '600',
+                      textAlign: 'center',
+                      fontSize: 16
+                    }}>
+                      Annulla
+                    </Text>
+                  </TouchableOpacity>
                 )}
-              </TouchableOpacity>
-
-              {/* Alternative Action */}
-              <TouchableOpacity onPress={handleToggleMode} disabled={authLoading}>
-                <Text className="text-neutral-500 text-center">
-                  {isLogin 
-                    ? "Non hai un account? Registrati" 
-                    : "Hai già un account? Accedi"
-                  }
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Additional Info */}
-            <View className="bg-primary-50 rounded-xl p-4 mb-6">
-              <Text className="text-primary-700 font-medium text-center mb-2">
-                🦷 Perché registrarsi?
-              </Text>
-              <Text className="text-primary-600 text-center text-sm leading-5">
-                Sincronizza i tuoi promemoria su tutti i dispositivi e non perdere mai 
-                una sostituzione importante per la tua salute
-              </Text>
-            </View>
-
-            {/* Preview Message */}
-            <View className="bg-orange-50 border border-orange-200 rounded-xl p-4">
-              <Text className="text-orange-600 font-medium text-center mb-1">
-                👀 Modalità Anteprima
-              </Text>
-              <Text className="text-neutral-600 text-center text-sm">
-                {fallbackMessage}
-              </Text>
+              </View>
             </View>
           </View>
         </ScrollView>

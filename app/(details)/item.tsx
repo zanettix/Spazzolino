@@ -2,8 +2,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
-import { SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
-import AuthWrapper from '../../components/authWrapper';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import AuthWrapper from '../../components/authForm';
 
 export default function ItemScreen() {
   const { itemName, itemId } = useLocalSearchParams();
@@ -19,7 +20,8 @@ export default function ItemScreen() {
   return (
     <AuthWrapper 
       requireAuth={true}
-      fallbackMessage={`Accedi per aggiungere "${itemName}" ai tuoi promemoria`}
+      showCancelButton={true} // Mostra il bottone annulla
+      onCancel={() => router.back()} // Torna indietro se annullato
     >
       <SafeAreaView className="flex-1 bg-neutral-50">
         {/* Header con back button */}
@@ -58,16 +60,6 @@ export default function ItemScreen() {
                 Aggiungi ai promemoria
               </Text>
             </TouchableOpacity>
-          </View>
-          
-          <View className="bg-primary-50 rounded-xl p-4">
-            <Text className="text-primary-700 font-inter-medium mb-2">
-              💡 Come funziona
-            </Text>
-            <Text className="text-primary-600 font-inter text-sm">
-              Riceverai notifiche intelligenti basate su studi scientifici 
-              per mantenere la tua salute e igiene al top.
-            </Text>
           </View>
         </View>
       </SafeAreaView>

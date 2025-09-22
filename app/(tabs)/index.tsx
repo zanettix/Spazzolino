@@ -1,7 +1,7 @@
-// app/(tabs)/index.tsx
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
-import { Alert, FlatList, SafeAreaView, Text, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+import { FlatList, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import defaultItems from "../../assets/data/defaultItems.json";
 import SearchBar from "../../components/searchBar";
 import { useAuth } from "../../hooks/useAuth";
@@ -9,55 +9,11 @@ import { useAuth } from "../../hooks/useAuth";
 export default function Index() {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // Filtro gli oggetti in base alla query di ricerca
-  const filteredItems = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return defaultItems.defaultItems;
-    }
-    
-    return defaultItems.defaultItems.filter(item =>
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery]);
-
-  const handleClearSearch = () => {
-    setSearchQuery("");
-  };
+  const [filteredItems, setFilteredItems] = useState(defaultItems.defaultItems);
 
   const handleItemPress = (item: any) => {
-    if (!user && !loading) {
-      // Mostra un alert informativo
-      Alert.alert(
-        "Autenticazione richiesta",
-        `Per aggiungere "${item.name}" ai tuoi promemoria devi prima accedere al tuo account.`,
-        [
-          {
-            text: "Annulla",
-            style: "cancel"
-          },
-          {
-            text: "Accedi ora",
-            onPress: () => {
-              // Naviga verso la pagina protetta
-              router.push({
-                pathname: '/(details)/item',
-                params: { 
-                  itemName: item.name,
-                  itemId: item.name.toLowerCase().replace(/\s+/g, '-')
-                }
-              });
-            }
-          }
-        ]
-      );
-      return;
-    }
-
-    // Se l'utente è autenticato, naviga direttamente
+    // Naviga sempre alla pagina di dettaglio
+    // La gestione dell'autenticazione avviene in item.tsx
     router.push({
       pathname: '/(details)/item',
       params: { 
@@ -114,7 +70,7 @@ export default function Index() {
         Nessun risultato
       </Text>
       <Text className="text-sm text-neutral-400 text-center px-8">
-        Non abbiamo trovato oggetti che corrispondono alla tua ricerca "{searchQuery}"
+        Non abbiamo trovato oggetti che corrispondono alla tua ricerca
       </Text>
     </View>
   );
@@ -126,33 +82,8 @@ export default function Index() {
       </Text>
       <Text className="text-base text-neutral-600 text-center">
         {filteredItems.length} oggett{filteredItems.length === 1 ? 'o' : 'i'} 
-        {searchQuery ? ' trovati' : ' disponibili'}
+        {filteredItems.length === defaultItems.defaultItems.length ? ' disponibili' : ' trovati'}
       </Text>
-      
-      {/* Status autenticazione */}
-      {!loading && (
-        <View className="mt-3">
-          {user ? (
-            <View className="bg-green-50 border border-green-200 rounded-lg p-3">
-              <View className="flex-row items-center justify-center">
-                <View className="w-2 h-2 bg-green-500 rounded-full mr-2" />
-                <Text className="text-green-600 font-medium text-sm">
-                  Benvenuto, {user.user_metadata?.nickname || 'Utente'}!
-                </Text>
-              </View>
-            </View>
-          ) : (
-            <View className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <Text className="text-blue-600 font-medium text-center text-sm">
-                👆 Tocca un oggetto per iniziare a tracciarlo
-              </Text>
-              <Text className="text-blue-500 text-center text-xs mt-1">
-                (Richiede autenticazione)
-              </Text>
-            </View>
-          )}
-        </View>
-      )}
     </View>
   );
 
@@ -162,11 +93,11 @@ export default function Index() {
         {/* Header */}
         {renderHeader()}
         
-        {/* Search Bar */}
+        {/* Search Bar Autonoma */}
         <SearchBar
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          onClear={handleClearSearch}
+          data={defaultItems.defaultItems}
+          onFilteredData={setFilteredItems}
+          searchFields={['name', 'category', 'description']}
           placeholder="Cerca per nome, categoria o descrizione..."
         />
         
@@ -177,7 +108,7 @@ export default function Index() {
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: 20, paddingHorizontal: 20 }}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={searchQuery ? renderEmptyState : null}
+          ListEmptyComponent={filteredItems.length === 0 ? renderEmptyState : null}
         />
       </View>
     </SafeAreaView>

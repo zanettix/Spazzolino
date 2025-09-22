@@ -1,20 +1,49 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { TextInput, TouchableOpacity, View } from 'react-native';
 
-interface searchBarProps {
-  value: string;
-  onChangeText: (text: string) => void;
+interface SearchBarProps {
+  data: any[]; // Array di oggetti da filtrare
+  onFilteredData: (filteredData: any[]) => void; // Callback con risultati filtrati
+  searchFields: string[]; // Campi su cui effettuare la ricerca
   placeholder?: string;
-  onClear?: () => void;
 }
 
 export default function SearchBar({ 
-  value, 
-  onChangeText, 
-  placeholder = "Cerca oggetti...", 
-  onClear 
-}: searchBarProps) {
+  data,
+  onFilteredData,
+  searchFields,
+  placeholder = "Cerca oggetti..." 
+}: SearchBarProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Logica di filtro autonoma
+  const filteredData = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return data;
+    }
+    
+    return data.filter(item => {
+      return searchFields.some(field => {
+        const fieldValue = field.split('.').reduce((obj, key) => obj?.[key], item);
+        return fieldValue?.toString().toLowerCase().includes(searchQuery.toLowerCase());
+      });
+    });
+  }, [data, searchQuery, searchFields]);
+
+  // Notifica il componente padre ogni volta che i dati filtrati cambiano
+  React.useEffect(() => {
+    onFilteredData(filteredData);
+  }, [filteredData, onFilteredData]);
+
+  const handleClear = () => {
+    setSearchQuery("");
+  };
+
+  const handleChangeText = (text: string) => {
+    setSearchQuery(text);
+  };
+
   return (
     <View className="bg-white rounded-xl mx-5 mb-4 shadow-sm border border-neutral-100">
       <View className="flex-row items-center px-4 py-3">
@@ -26,17 +55,17 @@ export default function SearchBar({
         />
         
         <TextInput
-          value={value}
-          onChangeText={onChangeText}
+          value={searchQuery}
+          onChangeText={handleChangeText}
           placeholder={placeholder}
           placeholderTextColor="#a3a3a3"
-          className="flex-1 text-base text-neutral-800 font-inter"
+          className="flex-1 text-base text-neutral-800"
           returnKeyType="search"
         />
         
-        {value.length > 0 && (
+        {searchQuery.length > 0 && (
           <TouchableOpacity 
-            onPress={onClear}
+            onPress={handleClear}
             className="ml-2 p-1"
             activeOpacity={0.7}
           >

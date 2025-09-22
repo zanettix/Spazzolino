@@ -1,12 +1,19 @@
-// services/authService.ts
 import { UserLogin } from '@/types/userLogin';
 import { UserRegistration } from '@/types/userRegistration';
-import { supabase } from '../utils/supabase';
+import { AuthValidation } from '@/utils/authValidation';
+import { supabase } from '@/utils/supabase';
+
 
 export class AuthService {
 
-  static async signIn(credentials: UserLogin) {
+  static async login(credentials: UserLogin) {
     try {
+      const validation = AuthValidation.validateLogin(credentials);
+      
+      if (!validation.isValid) {
+        throw new Error(validation.errors[0]); 
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: credentials.email,
         password: credentials.password,
@@ -31,6 +38,12 @@ export class AuthService {
 
   static async signUp(credentials: UserRegistration) {
     try {
+      const validation = AuthValidation.validateRegistration(credentials);
+      
+      if (!validation.isValid) {
+        throw new Error(validation.errors[0]); 
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: credentials.email,
         password: credentials.password,
@@ -49,7 +62,7 @@ export class AuthService {
         success: true,
         user: data.user,
         session: data.session,
-        needsVerification: !data.session, // Se non c'è sessione, serve verifica email
+        needsVerification: !data.session, 
       };
     } catch (error) {
       return {
@@ -59,7 +72,7 @@ export class AuthService {
     }
   }
 
-  static async signOut() {
+  static async logOut() {
     try {
       const { error } = await supabase.auth.signOut();
       
@@ -102,9 +115,6 @@ export class AuthService {
     return result.success && !!result.session;
   }
 
-  /**
-   * Ottiene i dati del profilo utente
-   */
   static async getUserProfile() {
     try {
       const sessionResult = await this.getCurrentSession();
@@ -128,53 +138,5 @@ export class AuthService {
         error: error instanceof Error ? error.message : 'Errore nel recupero del profilo',
       };
     }
-  }
-
-  /**
-   * Valida i dati di login
-   */
-  static validateLoginData(credentials: UserLogin): { isValid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    if (!credentials.email) {
-      errors.push('Email è richiesta');
-    } else if (!/\S+@\S+\.\S+/.test(credentials.email)) {
-      errors.push('Email non valida');
-    }
-
-    if (!credentials.password) {
-      errors.push('Password è richiesta');
-    } else if (credentials.password.length < 6) {
-      errors.push('Password deve essere di almeno 6 caratteri');
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-    };
-  }
-
-
-  static validateRegistrationData(credentials: UserRegistration): { isValid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    if (!credentials.nickname) {
-      errors.push('Nickname è richiesto');
-    } else if (credentials.nickname.length < 2) {
-      errors.push('Nickname deve essere di almeno 2 caratteri');
-    }
-
-    // Riusa la validazione del login
-    const loginValidation = this.validateLoginData({
-      email: credentials.email,
-      password: credentials.password,
-    });
-    
-    errors.push(...loginValidation.errors);
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-    };
   }
 }

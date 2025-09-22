@@ -1,5 +1,5 @@
-// contexts/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { AuthService } from '../services/authService';
 import { AuthContextType } from '../types/authContextType';
 import { AuthState } from '../types/authState';
 import { UserLogin } from '../types/userLogin';
@@ -12,21 +12,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     session: null,
-    loading: true, // Inizia con loading true
+    loading: true,
   });
 
   useEffect(() => {
-    // Controlla la sessione esistente all'avvio
+    // Controlla la sessione esistente all'avvio usando il service
     const getInitialSession = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
+        const result = await AuthService.getCurrentSession();
         
-        setAuthState({
-          user: session?.user ?? null,
-          session,
-          loading: false,
-        });
+        if (result.success) {
+          setAuthState({
+            user: result.user,
+            session: result.session,
+            loading: false,
+          });
+        } else {
+          throw new Error(result.error);
+        }
       } catch (error) {
         console.error('Errore nel recupero sessione iniziale:', error);
         setAuthState({
@@ -54,37 +57,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (credentials: UserLogin) => {
-    const { error } = await supabase.auth.signInWithPassword(credentials);
-    if (error) throw new Error(error.message);
+    const result = await AuthService.login(credentials);
+    
+    if (!result.success) {
+      throw new Error(result.error);
+    }
+    // Aggiornamento dello stato gestito dall'onAuthStateChange
   };
 
   const signUp = async (credentials: UserRegistration) => {
-    const { data, error } = await supabase.auth.signUp({
-      email: credentials.email,
-      password: credentials.password,
-      options: {
-        data: {
-          nickname: credentials.nickname,
-        },
-      },
-    });
+    const result = await AuthService.signUp(credentials);
     
-    if (error) throw new Error(error.message);
+    if (!result.success) {
+      throw new Error(result.error);
+    }
     
-    // Se l'utente non ha una sessione, significa che deve verificare l'email
-    if (!data.session) {
+    // Se l'utente deve verificare l'email
+    if (result.needsVerification) {
       throw new Error('VERIFICATION_REQUIRED');
     }
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw new Error(error.message);
-  };
-
-  const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
-    if (error) throw new Error(error.message);
+    const result = await AuthService.logOut();
+    
+    if (!result.success) {
+      throw new Error(result.error);
+    }
   };
 
   const value: AuthContextType = {
@@ -92,7 +91,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
-    resetPassword,
   };
 
   return (

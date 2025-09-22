@@ -4,7 +4,7 @@
     "slug": "Spazzolino",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icons/main_icon.png",
+    "icon": "./assets/icons/main_icon.jpg",
     "scheme": "spazzolino",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,23 +14,23 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/icons/main_icon.png",
-        "backgroundImage": "./assets/icons/main_icon.png",
-        "monochromeImage": "./assets/icons/main_icon.png"
+        "foregroundImage": "./assets/icons/main_icon.jpg",
+        "backgroundImage": "./assets/icons/main_icon.jpg",
+        "monochromeImage": "./assets/icons/main_icon.jpg"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/icons/main_icon.png"
+      "favicon": "./assets/icons/main_icon.jpg"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/icons/main_icon.png",
+          "image": "./assets/icons/main_icon.jpg",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
