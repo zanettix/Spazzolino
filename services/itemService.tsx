@@ -4,7 +4,6 @@ import { supabase } from '@/utils/supabase';
 export class ItemService {
 
   static async getCatalog(): Promise<{ data: Item[] | null; error: string | null }> {
-    try {
       const { data, error } = await supabase
         .from('catalog')
         .select('*')
@@ -14,16 +13,10 @@ export class ItemService {
         console.error('Errore nel recupero catalogo:', error);
         return { data: null, error: error.message };
       }
-
       return { data: data || [], error: null };
-    } catch (err) {
-      console.error('Errore generico catalogo:', err);
-      return { data: null, error: 'Errore di connessione' };
-    }
   }
 
   static async getCatalogByCategory(category: Item['category']): Promise<{ data: Item[] | null; error: string | null }> {
-    try {
       const { data, error } = await supabase
         .from('catalog')
         .select('*')
@@ -33,16 +26,10 @@ export class ItemService {
       if (error) {
         return { data: null, error: error.message };
       }
-
       return { data: data || [], error: null };
-    } catch (err) {
-      return { data: null, error: 'Errore di connessione' };
-    }
   }
 
     static async searchCatalog(query: string): Promise<{ data: Item[] | null; error: string | null }> {
-    try {
-        // Sintassi corretta per Supabase: usa .ilike. invece di .ilike.%
         const { data, error } = await supabase
         .from('catalog')
         .select('*')
@@ -52,15 +39,10 @@ export class ItemService {
         if (error) {
         return { data: null, error: error.message };
         }
-
         return { data: data || [], error: null };
-    } catch (err) {
-        return { data: null, error: 'Errore di connessione' };
-    }
     }
 
   static async searchUserItem(query: string, userId?: string): Promise<{ data: any[] | null; error: string | null }> {
-  try {
     let supabaseQuery = supabase
       .from('user_items')
       .select(`
@@ -73,11 +55,6 @@ export class ItemService {
           icon
         )
       `);
-
-    // Se viene fornito un userId specifico, filtra per quello, altrimenti usa l'utente autenticato
-    if (userId) {
-      supabaseQuery = supabaseQuery.eq('owner', userId);
-    }
 
     const { data, error } = await supabaseQuery
       .or(`name.ilike.%${query}%,catalog.description.ilike.%${query}%,catalog.category.ilike.%${query}%`)
@@ -97,14 +74,53 @@ export class ItemService {
       link: item.catalog?.[0]?.link,
       icon: item.catalog?.[0]?.icon
     })) || [];
-
     return { data: transformedData, error: null };
-
-  } catch (err) {
-    console.error('Errore generico nella ricerca user_items:', err);
-    return { data: null, error: 'Errore di connessione' };
-  }
 }
 
+  static async activateItem(itemName: string, durationDays?: number): Promise<{ success: boolean; error: string | null }> {
+      const { error } = await supabase
+        .from('user_items')
+        .insert({
+          name: itemName,
+          duration_days: durationDays,
+          // owner viene settato automaticamente da auth.uid() nel database
+        });
 
+      if (error) {
+        console.error('Errore nell\'attivazione oggetto:', error);
+        return { success: false, error: error.message };
+      }
+      return { success: true, error: null };
+  }
+
+  static async deactivateItem(itemName: string): Promise<{ success: boolean; error: string | null }> {
+      const { error } = await supabase
+        .from('user_items')
+        .delete()
+        .eq('name', itemName);
+        // owner viene filtrato automaticamente tramite RLS di Supabase
+
+      if (error) {
+        console.error('Errore nella disattivazione oggetto:', error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, error: null };
+  }
+
+  static async isItemActivated(itemName: string): Promise<{ activated: boolean; error: string | null }> { 
+        const { data, error } = await supabase
+          .from('user_items')
+          .select('name')
+          .eq('name', itemName);
+
+        if (error) {
+          console.error('Errore nel controllo attivazione:', error);
+          return { activated: false, error: error.message };
+        }
+        const isActivated = data && data.length > 0;
+        
+        return { activated: isActivated, error: null };
+  }
+  
 }

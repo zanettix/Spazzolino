@@ -22,11 +22,14 @@ export default function Index() {
 
   const handleItemPress = (item: Item) => {
     router.push({
-      pathname: '/(details)/item',
+      pathname: '/[item]', 
       params: { 
-        name: item.name,
+        item: item.name,
         description: item.description,
-        link: item.link
+        category: item.category,
+        duration:item.duration_days,
+        link: item.link,
+        icon: item.icon
       }
     });
   };
