@@ -5,5 +5,5 @@ export interface Item {
   description: string;
   link: string;
   icon: string;
-  creator: string;
+  owner: string; // Distingue catalog da user_items
 }

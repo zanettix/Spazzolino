@@ -7,12 +7,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AuthWrapper from '../../components/authForm';
 
 export default function ItemScreen() {
-  const { itemName, itemId } = useLocalSearchParams();
+  const { name, } = useLocalSearchParams();
   const router = useRouter();
 
   const handleAddToReminders = () => {
     // Qui implementerai la logica per aggiungere l'item ai promemoria
-    console.log('Aggiungendo item:', itemName);
+    console.log('Aggiungendo item:', name);
     // Torna indietro dopo l'aggiunta
     router.back();
   };
@@ -34,7 +34,7 @@ export default function ItemScreen() {
           </TouchableOpacity>
           
           <Text className="text-lg font-inter-semibold text-neutral-900">
-            Aggiungi Oggetto
+            {name}
           </Text>
           
           <View className="w-10" />
@@ -43,9 +43,6 @@ export default function ItemScreen() {
         {/* Content */}
         <View className="flex-1 p-6">
           <View className="bg-white rounded-xl p-6 mb-6">
-            <Text className="text-2xl font-inter-bold text-neutral-900 mb-2">
-              {itemName}
-            </Text>
             
             <Text className="text-neutral-600 font-inter mb-6">
               Stai per aggiungere questo oggetto ai tuoi promemoria personali. 

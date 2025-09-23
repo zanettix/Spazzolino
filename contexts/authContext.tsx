@@ -62,7 +62,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!result.success) {
       throw new Error(result.error);
     }
-    // Aggiornamento dello stato gestito dall'onAuthStateChange
   };
 
   const signUp = async (credentials: UserRegistration) => {
