@@ -7,7 +7,7 @@ export default function DetailsLayout() {
         name="[item]" 
         options={{ 
           headerShown: false,
-          presentation: 'modal' // Presenta come modal per una migliore UX
+          presentation: 'modal'
         }} 
       />
     </Stack>

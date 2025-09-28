@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { AuthService } from '../services/authService';
 import { AuthContextType } from '../types/authContextType';
 import { AuthState } from '../types/authState';
@@ -15,8 +15,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading: true,
   });
 
+  // Flag per evitare inizializzazioni multiple
+  const initializationRef = useRef({
+    hasInitialized: false,
+    isInitializing: false
+  });
+
   useEffect(() => {
-    // Controlla la sessione esistente all'avvio usando il service
+    // Evita inizializzazioni multiple
+    if (initializationRef.current.hasInitialized || initializationRef.current.isInitializing) {
+      return;
+    }
+
+    console.log('📱 Avvio app - Controllo autenticazione...');
+    initializationRef.current.isInitializing = true;
+
     const getInitialSession = async () => {
       try {
         const result = await AuthService.getCurrentSession();
@@ -28,7 +41,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             loading: false,
           });
         } else {
-          throw new Error(result.error);
+          setAuthState({
+            user: null,
+            session: null,
+            loading: false,
+          });
         }
       } catch (error) {
         console.error('Errore nel recupero sessione iniziale:', error);
@@ -37,14 +54,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           session: null,
           loading: false,
         });
+      } finally {
+        initializationRef.current.isInitializing = false;
+        initializationRef.current.hasInitialized = true;
       }
     };
 
     getInitialSession();
 
-    // Ascolta i cambiamenti dello stato di autenticazione
+    console.log('🔐 Configurazione listener autenticazione...');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log(`🔐 Evento autenticazione: ${event}`);
+        
+        // Evita di processare eventi durante l'inizializzazione
+        if (initializationRef.current.isInitializing) {
+          return;
+        }
+
         setAuthState({
           user: session?.user ?? null,
           session,
@@ -53,8 +80,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      console.log('🔐 Cleanup listener autenticazione');
+      subscription.unsubscribe();
+    };
+  }, []); // Dipendenze vuote per eseguire solo al mount
 
   const signIn = async (credentials: UserLogin) => {
     const result = await AuthService.login(credentials);

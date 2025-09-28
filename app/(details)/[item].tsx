@@ -30,16 +30,6 @@ export default function Item() {
   const [customDuration, setCustomDuration] = useState(duration?.toString() || '');
   const [isEditingDuration, setIsEditingDuration] = useState(false);
 
-  // Funzione per formattare la categoria
-  const formatCategory = (cat: string) => {
-    switch(cat) {
-      case 'igiene_personale': return 'Igiene Personale';
-      case 'cucina': return 'Cucina';
-      case 'bagno': return 'Bagno';
-      default: return cat;
-    }
-  };
-
   // Funzione per aprire il link esterno
   const handleOpenLink = async () => {
     if (link && typeof link === 'string') {
@@ -50,21 +40,6 @@ export default function Item() {
         Alert.alert('Errore', 'Impossibile aprire il link');
       }
     }
-  };
-
-  // Callback per il successo dell'attivazione
-  const handleActivationSuccess = () => {
-    // Potresti aggiungere qui logiche aggiuntive come:
-    // - Refresh di dati
-    // - Analytics tracking
-    // - Navigazione automatica
-    console.log(`Item ${item} attivato con successo!`);
-  };
-
-  // Callback per errori di attivazione
-  const handleActivationError = (error: string) => {
-    console.error('Errore attivazione:', error);
-    // Qui potresti fare logging o altri handling specifici
   };
 
   // Funzione per salvare la durata personalizzata
@@ -123,7 +98,7 @@ export default function Item() {
 
             <View className="flex-row items-center justify-center bg-primary-50 rounded-full px-4 py-2">
               <Text className="text-primary-600 font-inter-medium ml-2">
-                {formatCategory(category?.toString() || '')}
+                {category?.toString() || ''}
               </Text>
             </View>
           </View>
@@ -211,13 +186,7 @@ export default function Item() {
             <ActivateItemBtn
               itemName={item?.toString() || ''}
               customDuration={getFinalDuration()}
-              onSuccess={handleActivationSuccess}
-              onError={handleActivationError}
             />
-
-            <Text className="text-neutral-500 font-inter text-sm text-center mt-3">
-              Riceverai una notifica quando sarà il momento di sostituire questo oggetto
-            </Text>
           </View>
         </ScrollView>
       </SafeAreaView>

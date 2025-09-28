@@ -1,3 +1,4 @@
+import { useNotifications } from '@/hooks/useNotifications';
 import { ItemService } from '@/services/itemService';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
@@ -5,120 +6,192 @@ import { ActivityIndicator, Alert, Text, TouchableOpacity, View } from 'react-na
 
 interface ActivateItemBtnProps {
   itemName: string;
-  customDuration?: number; // Durata personalizzata (opzionale)
-  onSuccess?: () => void; // Callback dopo attivazione successful
-  onError?: (error: string) => void; // Callback per gestire errori
+  customDuration?: number;
   disabled?: boolean;
 }
 
 const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
   itemName,
   customDuration,
-  onSuccess,
-  onError,
   disabled = false
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isActivated, setIsActivated] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(true);
+  
+  const { hasPermissions, requestPermissions, isInitialized } = useNotifications();
 
-  // Controlla se l'oggetto è già attivato al mount del componente
   useEffect(() => {
     checkItemStatus();
   }, [itemName]);
 
   const checkItemStatus = async () => {
     setCheckingStatus(true);
-    try {
-      const { activated, error } = await ItemService.isItemActivated(itemName);
-      if (error) {
-        console.warn('Errore controllo stato:', error);
-      } else {
-        setIsActivated(activated);
-      }
-    } catch (err) {
-      console.warn('Errore generico controllo stato:', err);
-    } finally {
-      setCheckingStatus(false);
+    const { activated, error } = await ItemService.isItemActivated(itemName);
+    
+    if (error) {
+      console.error('Errore nel controllo stato oggetto:', error);
+      Alert.alert('Errore', 'Impossibile verificare lo stato dell\'oggetto');
+    } else {
+      setIsActivated(activated);
+    }
+    setCheckingStatus(false);
+  };
+
+  const handleToggleActivation = async () => {
+    if (isActivated) {
+      // Chiedi conferma per disattivare
+      Alert.alert(
+        "Oggetto già attivato",
+        "Vuoi disattivare i promemoria per questo oggetto? Non riceverai più notifiche per questo elemento.",
+        [
+          { text: "Annulla", style: "cancel" },
+          { text: "Disattiva", style: "destructive", onPress: deactivateItem }
+        ]
+      );
+    } else {
+      await checkNotificationPermissionsAndActivate();
     }
   };
 
-  const handleAddToReminders = async () => {
-    if (isActivated) {
-      // Se già attivato, chiedi conferma per disattivare
+  const checkNotificationPermissionsAndActivate = async () => {
+    // Verifica se l'app è inizializzata
+    if (!isInitialized) {
       Alert.alert(
-        "Oggetto già attivato",
-        "Vuoi disattivare i promemoria per questo oggetto?",
+        'Sistema non pronto',
+        'Il sistema di notifiche non è ancora inizializzato. Riprova tra qualche secondo.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    // Verifica permessi notifiche
+    if (!hasPermissions) {
+      Alert.alert(
+        'Permessi notifiche richiesti',
+        `Per attivare ${itemName} e ricevere promemoria quando è il momento di sostituirlo, è necessario abilitare le notifiche.\n\nVuoi abilitarle ora?`,
         [
-          { text: "Annulla", style: "cancel" },
-          { text: "Disattiva", style: "destructive", onPress: handleDeactivate }
+          { 
+            text: 'No, attiva senza notifiche', 
+            style: 'cancel',
+            onPress: () => {
+              Alert.alert(
+                'Attenzione',
+                'Senza notifiche non riceverai promemoria per sostituire questo oggetto. Puoi sempre attivarle in seguito dalle impostazioni.',
+                [
+                  { text: 'Annulla', style: 'cancel' },
+                  { text: 'Procedi comunque', onPress: activateItem }
+                ]
+              );
+            }
+          },
+          {
+            text: 'Sì, abilita notifiche',
+            onPress: async () => {
+              const granted = await requestPermissions();
+              if (granted) {
+                activateItem();
+              } else {
+                Alert.alert(
+                  'Permessi negati',
+                  'Non è possibile abilitare le notifiche. Puoi comunque attivare l\'oggetto, ma non riceverai promemoria.',
+                  [
+                    { text: 'Annulla', style: 'cancel' },
+                    { text: 'Attiva senza notifiche', onPress: activateItem }
+                  ]
+                );
+              }
+            }
+          }
         ]
       );
       return;
     }
 
-    // Attiva l'oggetto
+    // Se i permessi sono già concessi, attiva direttamente
+    activateItem();
+  };
+
+  const activateItem = async () => {
     setIsLoading(true);
+    
     try {
-      const result = await ItemService.activateItem(itemName, customDuration);
+      console.log(`🔄 Attivazione ${itemName} con durata: ${customDuration || 'default'} giorni`);
       
-      if (result.success) {
+      const { success, error, item } = await ItemService.activateItem(itemName, customDuration);
+      
+      if (success && item) {
         setIsActivated(true);
-        onSuccess?.();
+        
+        // Mostra messaggio di successo personalizzato in base ai permessi
+        const message = hasPermissions 
+          ? `${itemName} è stato attivato! 🎉\n\nRiceverai notifiche:\n• 7 giorni prima della scadenza\n• Il giorno della sostituzione\n\nScadenza: ${new Date(item.expired_at).toLocaleDateString('it-IT')}`
+          : `${itemName} è stato attivato!\n\nNota: Le notifiche non sono abilitate. Ricordati di sostituirlo entro il ${new Date(item.expired_at).toLocaleDateString('it-IT')}`;
         
         Alert.alert(
-          "✅ Attivato!",
-          "Promemoria attivato con successo. Riceverai notifiche quando sarà ora di sostituire questo oggetto.",
-          [{ text: "OK" }]
+          'Attivazione completata',
+          message,
+          [{ text: 'Perfetto!' }]
         );
       } else {
-        const errorMessage = result.error || 'Errore sconosciuto';
-        onError?.(errorMessage);
-        
-        // Gestione errori specifici con messaggi user-friendly
-        let userMessage = errorMessage;
-        if (errorMessage.includes('già attivato')) {
-          userMessage = "Hai già attivato questo oggetto!";
-        } else if (errorMessage.includes('non trovato')) {
-          userMessage = "Oggetto non disponibile.";
-        }
-        
-        Alert.alert("❌ Errore", userMessage, [{ text: "OK" }]);
+        console.error('Errore attivazione:', error);
+        Alert.alert(
+          'Errore durante l\'attivazione',
+          error || 'Si è verificato un errore imprevisto. Riprova.'
+        );
       }
-    } catch (err) {
-      const errorMsg = 'Errore di connessione. Riprova più tardi.';
-      onError?.(errorMsg);
-      Alert.alert("❌ Errore", errorMsg, [{ text: "OK" }]);
+    } catch (error) {
+      console.error('Errore imprevisto:', error);
+      Alert.alert(
+        'Errore',
+        'Si è verificato un errore imprevisto durante l\'attivazione.'
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDeactivate = async () => {
+  const deactivateItem = async () => {
     setIsLoading(true);
+    
     try {
-      const result = await ItemService.deactivateItem(itemName);
+      console.log(`🔄 Disattivazione ${itemName}`);
       
-      if (result.success) {
+      const { success, error } = await ItemService.deactivateItem(itemName);
+      
+      if (success) {
         setIsActivated(false);
-        Alert.alert("✅ Disattivato", "Promemoria disattivato con successo.", [{ text: "OK" }]);
+        Alert.alert(
+          'Oggetto disattivato',
+          `${itemName} è stato rimosso dai tuoi oggetti attivi. Non riceverai più notifiche per questo elemento.`,
+          [{ text: 'OK' }]
+        );
       } else {
-        Alert.alert("❌ Errore", result.error || 'Errore nella disattivazione', [{ text: "OK" }]);
+        console.error('Errore disattivazione:', error);
+        Alert.alert(
+          'Errore durante la disattivazione',
+          error || 'Si è verificato un errore durante la disattivazione.'
+        );
       }
-    } catch (err) {
-      Alert.alert("❌ Errore", 'Errore di connessione. Riprova più tardi.', [{ text: "OK" }]);
+    } catch (error) {
+      console.error('Errore imprevisto:', error);
+      Alert.alert(
+        'Errore',
+        'Si è verificato un errore imprevisto durante la disattivazione.'
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Determina il testo e l'icona del bottone
+  // Determina contenuto del bottone
   const getButtonContent = () => {
     if (checkingStatus) {
       return {
         text: "Controllo...",
         icon: "hourglass" as const,
-        showLoader: false
+        showLoader: false,
+        bgColor: "bg-neutral-400"
       };
     }
     
@@ -126,38 +199,58 @@ const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
       return {
         text: isLoading ? "Disattivando..." : "Attivato",
         icon: "checkmark-circle" as const,
-        showLoader: isLoading
+        showLoader: isLoading,
+        bgColor: "bg-success"
       };
     }
     
     return {
       text: isLoading ? "Attivando..." : "Attiva Promemoria",
       icon: "notifications" as const,
-      showLoader: isLoading
+      showLoader: isLoading,
+      bgColor: "bg-primary-500"
     };
   };
 
-  const buttonContent = getButtonContent();
+  const buttonContent = getButtonContent(); 
   const isButtonDisabled = disabled || isLoading || checkingStatus;
 
   return (
-    <TouchableOpacity
-      className={`bg-primary-500 py-4 rounded-2xl shadow-sm ${isButtonDisabled ? 'opacity-50' : 'opacity-100'}`}
-      onPress={handleAddToReminders}
-      disabled={isButtonDisabled}
-      activeOpacity={0.7}
-    >
-      <View className="flex-row items-center justify-center">
-        {buttonContent.showLoader ? (
-          <ActivityIndicator size="small" color="white" />
-        ) : (
-          <Ionicons name={buttonContent.icon} size={24} color="white" />
-        )}
-        <Text className="text-white font-inter-semibold text-lg ml-3">
-          {buttonContent.text}
-        </Text>
-      </View>
-    </TouchableOpacity>
+    <View>
+      <TouchableOpacity
+        className={`${buttonContent.bgColor} py-4 rounded-2xl shadow-sm ${isButtonDisabled ? 'opacity-50' : 'opacity-100'}`}
+        onPress={handleToggleActivation}
+        disabled={isButtonDisabled}
+        activeOpacity={0.7}
+      >
+        <View className="flex-row items-center justify-center">
+          {buttonContent.showLoader ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Ionicons name={buttonContent.icon} size={24} color="white" />
+          )}
+          <Text className="text-white font-inter-semibold text-lg ml-3">
+            {buttonContent.text}
+          </Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* Indicatore stato notifiche */}
+      {isActivated && (
+        <View className="mt-2 flex-row items-center justify-center">
+          <Ionicons 
+            name={hasPermissions ? "notifications" : "notifications-off"} 
+            size={16} 
+            color={hasPermissions ? "#10b981" : "#f59e0b"} 
+          />
+          <Text className={`ml-2 text-sm font-inter-medium ${
+            hasPermissions ? 'text-success' : 'text-warning'
+          }`}>
+            {hasPermissions ? 'Notifiche attive' : 'Notifiche disabilitate'}
+          </Text>
+        </View>
+      )}
+    </View>
   );
 };
 

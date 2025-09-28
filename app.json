@@ -38,6 +38,14 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icons/main_icon.jpg",
+          "color": "#3b82f6",
+          "defaultChannel": "spazzolino-reminders"
+        }
       ]
     ],
     "experiments": {
