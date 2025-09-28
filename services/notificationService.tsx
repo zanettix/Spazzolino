@@ -115,7 +115,7 @@ export class NotificationService {
       return notificationsScheduled > 0;
 
     } catch (error) {
-      console.error(`Errore nella programmazione notifiche per ${item.name}:`, error);
+      console.error(error);
       return false;
     }
   }
@@ -127,35 +127,19 @@ export class NotificationService {
       const notificationsToCancel = scheduledNotifications.filter(notification => {
         const identifier = notification.identifier;
         
-        // Se owner è specificato, cerca notifiche specifiche per questo utente
         if (owner) {
           return identifier.includes(`_${itemName}_${owner}`);
         }
         
-        // Altrimenti cancella tutte le notifiche per questo oggetto
         return identifier.includes(`_${itemName}_`);
       });
 
       for (const notification of notificationsToCancel) {
         await Notifications.cancelScheduledNotificationAsync(notification.identifier);
-        console.log(`🗑️ Notifica cancellata: ${notification.identifier}`);
-      }
-
-      if (notificationsToCancel.length === 0) {
-        console.log(`Nessuna notifica trovata per ${itemName}`);
       }
 
     } catch (error) {
-      console.error('Errore nella cancellazione notifiche:', error);
-    }
-  }
-
-  static async cancelAllNotifications(): Promise<void> {
-    try {
-      await Notifications.cancelAllScheduledNotificationsAsync();
-      console.log('🗑️ Tutte le notifiche cancellate');
-    } catch (error) {
-      console.error('Errore nella cancellazione di tutte le notifiche:', error);
+      console.error(error);
     }
   }
 
@@ -181,7 +165,6 @@ export class NotificationService {
   }
 
   static async scheduleNotificationsForAllItems(items: Item[]): Promise<{ success: number; failed: number }> {
-    console.log(`🔄 Programmazione notifiche per ${items.length} oggetti`);
     
     let success = 0;
     let failed = 0;
@@ -194,8 +177,6 @@ export class NotificationService {
         failed++;
       }
     }
-
-    console.log(`✅ Notifiche programmate: ${success} successi, ${failed} fallimenti`);
     return { success, failed };
   }
 }

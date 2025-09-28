@@ -15,14 +15,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading: true,
   });
 
-  // Flag per evitare inizializzazioni multiple
   const initializationRef = useRef({
     hasInitialized: false,
     isInitializing: false
   });
 
   useEffect(() => {
-    // Evita inizializzazioni multiple
     if (initializationRef.current.hasInitialized || initializationRef.current.isInitializing) {
       return;
     }
@@ -81,10 +79,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => {
-      console.log('🔐 Cleanup listener autenticazione');
       subscription.unsubscribe();
     };
-  }, []); // Dipendenze vuote per eseguire solo al mount
+  }, []); 
 
   const signIn = async (credentials: UserLogin) => {
     const result = await AuthService.login(credentials);

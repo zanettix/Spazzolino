@@ -1,4 +1,3 @@
-// types/authContextType.ts
 import { AuthState } from "./authState";
 import { UserLogin } from "./userLogin";
 import { UserRegistration } from "./userRegistration";

@@ -79,7 +79,6 @@ export class ItemService {
 
   static async activateItem(itemName: string, durationDays?: number): Promise<{ success: boolean; error: string | null; item?: Item }> {
     try {
-      console.log(`🔄 Attivazione oggetto: ${itemName}`);
 
       // Prima inserisci l'oggetto nel database
       const { data, error } = await supabase
@@ -118,17 +117,6 @@ export class ItemService {
         owner: data.owner
       };
 
-      console.log(`✅ Oggetto ${itemName} attivato nel database`);
-
-      // Programma le notifiche per questo oggetto
-      const notificationsScheduled = await NotificationService.scheduleNotificationsForItem(item);
-      
-      if (notificationsScheduled) {
-        console.log(`🔔 Notifiche programmate per ${itemName}`);
-      } else {
-        console.warn(`⚠️ Impossibile programmare notifiche per ${itemName}`);
-      }
-
       return { success: true, error: null, item };
 
     } catch (error) {
@@ -139,7 +127,6 @@ export class ItemService {
 
   static async deactivateItem(itemName: string): Promise<{ success: boolean; error: string | null }> {
     try {
-      console.log(`🔄 Disattivazione oggetto: ${itemName}`);
 
       // Prima cancella le notifiche
       await NotificationService.cancelNotificationsForItem(itemName);
@@ -157,7 +144,6 @@ export class ItemService {
         return { success: false, error: error.message };
       }
 
-      console.log(`✅ Oggetto ${itemName} disattivato`);
       return { success: true, error: null };
 
     } catch (error) {
@@ -207,17 +193,6 @@ export class ItemService {
         expired_at: data.expired_at,
         owner: data.owner
       };
-
-      console.log(`✅ Durata aggiornata per ${itemName}`);
-
-      // Riprogramma le notifiche con la nuova data
-      const notificationsScheduled = await NotificationService.scheduleNotificationsForItem(updatedItem);
-      
-      if (notificationsScheduled) {
-        console.log(`🔔 Notifiche riprogrammate per ${itemName}`);
-      } else {
-        console.warn(`⚠️ Impossibile riprogrammare notifiche per ${itemName}`);
-      }
 
       return { success: true, error: null, item: updatedItem };
 
@@ -297,8 +272,6 @@ export class ItemService {
 
       // Riprogramma le notifiche per tutti gli oggetti
       const result = await NotificationService.scheduleNotificationsForAllItems(userItems);
-      
-      console.log(`✅ Sincronizzazione completata: ${result.success} oggetti sincronizzati`);
       
       return { 
         success: true, 

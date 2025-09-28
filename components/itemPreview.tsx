@@ -39,7 +39,8 @@ export function ItemPreview({ items, loading, error, onItemPress, onRetry }: Ite
     return `${daysRemaining} giorni`;
   };
 
-  if (loading) {
+  // Loading solo se non ci sono dati e si sta caricando per la prima volta
+  if (loading && items.length === 0) {
     return (
       <View className="flex-1 justify-center items-center py-12">
         <ActivityIndicator size="large" color="#3b82f6" />
@@ -148,8 +149,11 @@ export function ItemPreview({ items, loading, error, onItemPress, onRetry }: Ite
   const renderEmptyState = () => (
     <View className="flex-1 justify-center items-center py-12">
       <Text className="text-lg font-medium text-neutral-500 mb-2">Nessun oggetto attivo</Text>
-      <Text className="text-sm text-neutral-400 text-center px-8">
+      <Text className="text-sm text-neutral-400 text-center px-8 mb-4">
         Vai alla ricerca per attivare promemoria per i tuoi oggetti
+      </Text>
+      <Text className="text-xs text-neutral-400 text-center px-8">
+        Scorri verso l'alto per aggiornare
       </Text>
     </View>
   );
@@ -159,9 +163,14 @@ export function ItemPreview({ items, loading, error, onItemPress, onRetry }: Ite
       data={items}
       keyExtractor={(item) => `${item.name}-${item.owner}`}
       renderItem={renderItem}
-      contentContainerStyle={{ paddingBottom: 20, paddingHorizontal: 20 }}
+      contentContainerStyle={{ 
+        paddingBottom: 20, 
+        paddingHorizontal: 20,
+        flexGrow: 1 
+      }}
       showsVerticalScrollIndicator={false}
       ListEmptyComponent={items.length === 0 ? renderEmptyState : null}
+      scrollEnabled={false} // Disabilita scroll interno per lasciare gestione al ScrollView padre
     />
   );
 }

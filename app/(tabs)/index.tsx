@@ -2,8 +2,9 @@ import { ItemPreview } from "@/components/itemPreview";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserItems } from "@/hooks/useItems";
 import { Item } from "@/models/item";
-import { useRouter } from "expo-router";
-import { Text, View } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback } from "react";
+import { RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Index() {
@@ -15,6 +16,15 @@ export default function Index() {
     error, 
     refreshUserItems
   } = useUserItems();
+
+  // Auto-refresh quando la schermata torna in focus
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        refreshUserItems();
+      }
+    }, [user?.id]) // Solo quando cambia l'ID utente, non la funzione refreshUserItems
+  );
 
   const handleItemPress = (item: Item) => {
     router.push({
@@ -54,7 +64,7 @@ export default function Index() {
   const stats = getItemStats();
 
   const renderHeader = () => (
-    <View className="mb-6 px-5">
+    <View className="mb-6 px-5 py-4">
       <Text className="text-2xl font-bold text-neutral-900 text-center mb-1">
         I Miei Oggetti
       </Text>
@@ -66,22 +76,22 @@ export default function Index() {
               Caricamento...
             </Text>
           ) : stats ? (
-            <View className="flex-row items-center justify-center space-x-4">
-              <Text className="text-sm text-neutral-600">
+            <View className="flex-row items-center justify-center flex-wrap">
+              <Text className="text-sm text-neutral-600 mx-1">
                 {stats.total} oggett{stats.total === 1 ? 'o attivo' : 'i attivi'}
               </Text>
               {stats.expired > 0 && (
                 <>
-                  <Text className="text-neutral-300">•</Text>
-                  <Text className="text-sm text-red-600 font-medium">
+                  <Text className="text-neutral-300 mx-1">•</Text>
+                  <Text className="text-sm text-red-600 font-medium mx-1">
                     {stats.expired} scadut{stats.expired === 1 ? 'o' : 'i'}
                   </Text>
                 </>
               )}
               {stats.expiringSoon > 0 && (
                 <>
-                  <Text className="text-neutral-300">•</Text>
-                  <Text className="text-sm text-orange-600 font-medium">
+                  <Text className="text-neutral-300 mx-1">•</Text>
+                  <Text className="text-sm text-orange-600 font-medium mx-1">
                     {stats.expiringSoon} in scadenza
                   </Text>
                 </>
@@ -103,19 +113,35 @@ export default function Index() {
 
   return (
     <SafeAreaView className="flex-1 bg-neutral-50">
-      <View className="flex-1 pt-4">
+      <ScrollView
+        className="flex-1"
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={refreshUserItems}
+            tintColor="#3b82f6"
+            colors={["#3b82f6"]}
+            title="Aggiornamento oggetti..."
+            titleColor="#737373"
+          />
+        }
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
         {/* Header con statistiche */}
         {renderHeader()}
         
         {/* Lista oggetti attivi dell'utente */}
-        <ItemPreview
-          items={userItems}
-          loading={loading}
-          error={error}
-          onItemPress={handleItemPress}
-          onRetry={refreshUserItems}
-        />
-      </View>
+        <View className="flex-1">
+          <ItemPreview
+            items={userItems}
+            loading={false} // Gestiamo il loading tramite RefreshControl
+            error={error}
+            onItemPress={handleItemPress}
+            onRetry={refreshUserItems}
+          />
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
