@@ -1,3 +1,4 @@
+import { AuthBtn } from "@/components/authBtn";
 import { ItemPreview } from "@/components/itemPreview";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserItems } from "@/hooks/useItems";
@@ -9,7 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Index() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { 
     userItems, 
     loading, 
@@ -17,13 +18,12 @@ export default function Index() {
     refreshUserItems
   } = useUserItems();
 
-  // Auto-refresh quando la schermata torna in focus
   useFocusEffect(
     useCallback(() => {
       if (user) {
         refreshUserItems();
       }
-    }, [user?.id]) // Solo quando cambia l'ID utente, non la funzione refreshUserItems
+    }, [user?.id])
   );
 
   const handleItemPress = (item: Item) => {
@@ -35,12 +35,12 @@ export default function Index() {
         category: item.category,
         duration: item.duration_days,
         link: item.link,
-        icon: item.icon
+        icon: item.icon,
+        icon_family: item.icon_family
       }
     });
   };
 
-  // Funzione per contare oggetti per stato
   const getItemStats = () => {
     if (!userItems.length) return null;
 
@@ -69,47 +69,55 @@ export default function Index() {
         I Miei Oggetti
       </Text>
       
-      {user ? (
-        <View className="items-center">
-          {loading ? (
-            <Text className="text-base text-neutral-600">
-              Caricamento...
-            </Text>
-          ) : stats ? (
-            <View className="flex-row items-center justify-center flex-wrap">
-              <Text className="text-sm text-neutral-600 mx-1">
-                {stats.total} oggett{stats.total === 1 ? 'o attivo' : 'i attivi'}
+      {loading ? (
+        <Text className="text-base text-neutral-600 text-center">
+          Caricamento...
+        </Text>
+      ) : stats ? (
+        <View className="flex-row items-center justify-center flex-wrap">
+          <Text className="text-sm text-neutral-600 mx-1">
+            {stats.total} oggett{stats.total === 1 ? 'o attivo' : 'i attivi'}
+          </Text>
+          {stats.expired > 0 && (
+            <>
+              <Text className="text-neutral-300 mx-1">•</Text>
+              <Text className="text-sm text-red-600 font-medium mx-1">
+                {stats.expired} scadut{stats.expired === 1 ? 'o' : 'i'}
               </Text>
-              {stats.expired > 0 && (
-                <>
-                  <Text className="text-neutral-300 mx-1">•</Text>
-                  <Text className="text-sm text-red-600 font-medium mx-1">
-                    {stats.expired} scadut{stats.expired === 1 ? 'o' : 'i'}
-                  </Text>
-                </>
-              )}
-              {stats.expiringSoon > 0 && (
-                <>
-                  <Text className="text-neutral-300 mx-1">•</Text>
-                  <Text className="text-sm text-orange-600 font-medium mx-1">
-                    {stats.expiringSoon} in scadenza
-                  </Text>
-                </>
-              )}
-            </View>
-          ) : (
-            <Text className="text-base text-neutral-600">
-              Nessun oggetto attivo
-            </Text>
+            </>
+          )}
+          {stats.expiringSoon > 0 && (
+            <>
+              <Text className="text-neutral-300 mx-1">•</Text>
+              <Text className="text-sm text-orange-600 font-medium mx-1">
+                {stats.expiringSoon} in scadenza
+              </Text>
+            </>
           )}
         </View>
       ) : (
         <Text className="text-base text-neutral-600 text-center">
-          Accedi per vedere i tuoi oggetti
+          Nessun oggetto attivo
         </Text>
       )}
     </View>
   );
+
+  if (!user && !authLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-neutral-50">
+        <View className="flex-1 justify-center items-center px-5">
+          <Text className="text-2xl font-bold text-neutral-900 mb-2 text-center">
+            Benvenuto in Spazzolino!
+          </Text>
+          <Text className="text-base text-neutral-600 text-center mb-6">
+            Accedi per gestire i tuoi promemoria e tenere traccia dei tuoi oggetti
+          </Text>
+          <AuthBtn />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-neutral-50">
@@ -128,14 +136,12 @@ export default function Index() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1 }}
       >
-        {/* Header con statistiche */}
         {renderHeader()}
         
-        {/* Lista oggetti attivi dell'utente */}
         <View className="flex-1">
           <ItemPreview
             items={userItems}
-            loading={false} // Gestiamo il loading tramite RefreshControl
+            loading={false}
             error={error}
             onItemPress={handleItemPress}
             onRetry={refreshUserItems}

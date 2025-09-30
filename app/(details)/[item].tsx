@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ActivateItemBtn from '../../components/activateItemBtn';
 import AuthWrapper from '../../components/authForm';
+import { renderIcon } from '../../utils/iconRenderer';
 
 export default function Item() {
   const { 
@@ -21,16 +22,15 @@ export default function Item() {
     category, 
     duration, 
     link, 
-    icon 
+    icon,
+    icon_family
   } = useLocalSearchParams();
   
   const router = useRouter();
   
-  // Stato per la durata personalizzabile
   const [customDuration, setCustomDuration] = useState(duration?.toString() || '');
   const [isEditingDuration, setIsEditingDuration] = useState(false);
 
-  // Funzione per aprire il link esterno
   const handleOpenLink = async () => {
     if (link && typeof link === 'string') {
       const supported = await Linking.canOpenURL(link);
@@ -42,7 +42,6 @@ export default function Item() {
     }
   };
 
-  // Funzione per salvare la durata personalizzata
   const handleSaveDuration = () => {
     const numDuration = parseInt(customDuration);
     if (!numDuration || numDuration <= 0) {
@@ -52,7 +51,6 @@ export default function Item() {
     setIsEditingDuration(false);
   };
 
-  // Calcola la durata finale da usare
   const getFinalDuration = (): number | undefined => {
     const customNum = parseInt(customDuration);
     if (customNum && customNum > 0) {
@@ -69,7 +67,6 @@ export default function Item() {
       onCancel={() => router.back()}
     >
       <SafeAreaView className="flex-1 bg-neutral-50">
-        {/* Header con back button */}
         <View className="flex-row items-center justify-between px-4 py-3 bg-white border-b border-neutral-200">
           <TouchableOpacity 
             onPress={() => router.back()}
@@ -84,15 +81,15 @@ export default function Item() {
         </View>
 
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-          {/* Immagine e Categoria */}
           <View className="bg-white mx-4 mt-4 rounded-2xl p-6 shadow-sm">
             <View className="items-center mb-4">
               <View className="w-32 h-32 bg-primary-100 rounded-full items-center justify-center mb-4">
-                <Ionicons 
-                  name={icon as any || 'cube'} 
-                  size={64} 
-                  color="#3b82f6" 
-                />
+                {renderIcon({
+                  family: icon_family?.toString() || null,
+                  name: icon?.toString() || null,
+                  size: 64,
+                  color: '#3b82f6'
+                })}
               </View>
             </View>
 
@@ -103,7 +100,6 @@ export default function Item() {
             </View>
           </View>
 
-          {/* Descrizione */}
           <View className="bg-white mx-4 mt-4 rounded-2xl p-6 shadow-sm">
             <Text className="text-neutral-600 font-inter-semibold mb-3 text-lg">
               Descrizione
@@ -113,7 +109,6 @@ export default function Item() {
             </Text>
           </View>
 
-          {/* Link esterno */}
           {link && (
             <View className="bg-white mx-4 mt-4 rounded-2xl p-6 shadow-sm">
               <Text className="text-neutral-600 font-inter-semibold mb-3 text-lg">
@@ -132,7 +127,6 @@ export default function Item() {
             </View>
           )}
 
-          {/* Durata personalizzabile */}
           <View className="bg-white mx-4 mt-4 rounded-2xl p-6 shadow-sm">
             <View className="flex-row items-center justify-between mb-4">
               <Text className="text-neutral-600 font-inter-semibold text-lg">
@@ -181,7 +175,6 @@ export default function Item() {
             </View>
           </View>
 
-          {/* Bottone Attiva Promemoria - Ora usa il componente ActivateItemBtn */}
           <View className="mx-4 my-6">
             <ActivateItemBtn
               itemName={item?.toString() || ''}

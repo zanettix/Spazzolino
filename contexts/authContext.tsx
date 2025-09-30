@@ -24,8 +24,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (initializationRef.current.hasInitialized || initializationRef.current.isInitializing) {
       return;
     }
-
-    console.log('📱 Avvio app - Controllo autenticazione...');
     initializationRef.current.isInitializing = true;
 
     const getInitialSession = async () => {
@@ -59,11 +57,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     getInitialSession();
-
-    console.log('🔐 Configurazione listener autenticazione...');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log(`🔐 Evento autenticazione: ${event}`);
         
         // Evita di processare eventi durante l'inizializzazione
         if (initializationRef.current.isInitializing) {

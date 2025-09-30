@@ -53,7 +53,8 @@ export class ItemService {
           category,
           description,
           link,
-          icon
+          icon,
+          icon_family
         )
       `);
 
@@ -72,7 +73,8 @@ export class ItemService {
       category: item.catalog?.[0]?.category,
       description: item.catalog?.[0]?.description,
       link: item.catalog?.[0]?.link,
-      icon: item.catalog?.[0]?.icon
+      icon: item.catalog?.[0]?.icon,
+      icon_family: item.catalog?.[0]?.icon_family
     })) || [];
     return { data: transformedData, error: null };
   }
@@ -80,13 +82,11 @@ export class ItemService {
   static async activateItem(itemName: string, durationDays?: number): Promise<{ success: boolean; error: string | null; item?: Item }> {
     try {
 
-      // Prima inserisci l'oggetto nel database
       const { data, error } = await supabase
         .from('user_items')
         .insert({
           name: itemName,
           duration_days: durationDays,
-          // owner viene settato automaticamente da auth.uid() nel database
         })
         .select(`
           *,
@@ -94,7 +94,8 @@ export class ItemService {
             category,
             description,
             link,
-            icon
+            icon,
+            icon_family
           )
         `)
         .single();
@@ -104,13 +105,13 @@ export class ItemService {
         return { success: false, error: error.message };
       }
 
-      // Trasforma i dati per creare l'oggetto Item completo
       const item: Item = {
         name: data.name,
         category: data.catalog.category,
         description: data.catalog.description,
         link: data.catalog.link,
         icon: data.catalog.icon,
+        icon_family: data.catalog.icon_family,
         created_at: data.created_at,
         duration_days: data.duration_days,
         expired_at: data.expired_at,
@@ -128,16 +129,12 @@ export class ItemService {
   static async deactivateItem(itemName: string): Promise<{ success: boolean; error: string | null }> {
     try {
 
-      // Prima cancella le notifiche
       await NotificationService.cancelNotificationsForItem(itemName);
-      console.log(`🗑️ Notifiche cancellate per ${itemName}`);
 
-      // Poi rimuovi dal database
       const { error } = await supabase
         .from('user_items')
         .delete()
         .eq('name', itemName);
-        // owner viene filtrato automaticamente tramite RLS di Supabase
 
       if (error) {
         console.error('Errore nella disattivazione oggetto:', error);
@@ -154,13 +151,9 @@ export class ItemService {
 
   static async updateItemDuration(itemName: string, newDurationDays: number): Promise<{ success: boolean; error: string | null; item?: Item }> {
     try {
-      console.log(`🔄 Aggiornamento durata per ${itemName}: ${newDurationDays} giorni`);
 
-      // Prima cancella le notifiche esistenti
       await NotificationService.cancelNotificationsForItem(itemName);
-      console.log(`🗑️ Notifiche esistenti cancellate per ${itemName}`);
 
-      // Aggiorna la durata nel database (il trigger ricalcolerà expired_at)
       const { data, error } = await supabase
         .from('user_items')
         .update({ duration_days: newDurationDays })
@@ -171,7 +164,8 @@ export class ItemService {
             category,
             description,
             link,
-            icon
+            icon,
+            icon_family
           )
         `)
         .single();
@@ -181,13 +175,13 @@ export class ItemService {
         return { success: false, error: error.message };
       }
 
-      // Trasforma i dati per creare l'oggetto Item completo
       const updatedItem: Item = {
         name: data.name,
         category: data.catalog.category,
         description: data.catalog.description,
         link: data.catalog.link,
         icon: data.catalog.icon,
+        icon_family: data.catalog.icon_family,
         created_at: data.created_at,
         duration_days: data.duration_days,
         expired_at: data.expired_at,
@@ -227,7 +221,8 @@ export class ItemService {
             category,
             description,
             link,
-            icon
+            icon,
+            icon_family
           )
         `)
         .order('expired_at', { ascending: true });
@@ -237,13 +232,13 @@ export class ItemService {
         return { data: null, error: error.message };
       }
 
-      // Trasforma i dati per la struttura Item
       const items: Item[] = data.map(item => ({
         name: item.name,
         category: item.catalog.category,
         description: item.catalog.description,
         link: item.catalog.link,
         icon: item.catalog.icon,
+        icon_family: item.catalog.icon_family,
         created_at: item.created_at,
         duration_days: item.duration_days,
         expired_at: item.expired_at,
@@ -258,19 +253,15 @@ export class ItemService {
     }
   }
 
-  // Funzione per sincronizzare le notifiche con gli oggetti attivi
   static async syncNotifications(): Promise<{ success: boolean; synchronized: number; error: string | null }> {
     try {
-      console.log('🔄 Sincronizzazione notifiche con oggetti attivi...');
 
-      // Recupera tutti gli oggetti attivi dell'utente
       const { data: userItems, error } = await this.getUserItems();
       
       if (error || !userItems) {
         return { success: false, synchronized: 0, error: error || 'Nessun oggetto trovato' };
       }
 
-      // Riprogramma le notifiche per tutti gli oggetti
       const result = await NotificationService.scheduleNotificationsForAllItems(userItems);
       
       return { 

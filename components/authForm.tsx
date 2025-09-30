@@ -17,20 +17,19 @@ import { useAuth } from '../hooks/useAuth';
 interface AuthFormProps {
   children: React.ReactNode;
   requireAuth?: boolean;
-  showCancelButton?: boolean; // Nuovo prop per controllare il bottone annulla
+  showCancelButton?: boolean;
   onCancel?: () => void;
 }
 
 export default function AuthForm({ 
   children, 
   requireAuth = true,
-  showCancelButton = false, // Default false
+  showCancelButton = false,
   onCancel
 }: AuthFormProps) {
   const { user, loading, signIn, signUp } = useAuth();
   const router = useRouter();
   
-  // Stati UI
   const [isLogin, setIsLogin] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -39,7 +38,6 @@ export default function AuthForm({
     nickname: ''
   });
 
-  // Loading iniziale
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-primary-500 justify-center items-center">
@@ -52,7 +50,6 @@ export default function AuthForm({
     );
   }
 
-  // Se autenticato, mostra contenuto
   if (!requireAuth || user) {
     return <>{children}</>;
   }
@@ -97,14 +94,11 @@ export default function AuthForm({
 
   const handleCancel = () => {
     if (onCancel) {
-      // Se c'è una callback personalizzata, usala
       onCancel();
     } else {
-      // Comportamento default: torna indietro nella navigazione
       if (router.canGoBack()) {
         router.back();
       } else {
-        // Se non può tornare indietro, vai alla home
         router.replace('/(tabs)');
       }
     }
@@ -136,7 +130,6 @@ export default function AuthForm({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
           <View className="bg-primary-500 pt-16 pb-8 px-6">
             <Text className="text-white text-3xl font-bold text-center mb-2">
               Spazzolino
@@ -146,11 +139,9 @@ export default function AuthForm({
             </Text>
           </View>
 
-          {/* Main Content */}
           <View className="flex-1 px-6 py-8">
             <View className="bg-white rounded-2xl shadow-sm p-6 mb-6">
               
-              {/* Toggle Buttons */}
               <View className="flex-row bg-neutral-100 rounded-xl p-1 mb-8">
                 <TouchableOpacity
                   style={{
@@ -191,7 +182,6 @@ export default function AuthForm({
                 </TouchableOpacity>
               </View>
 
-              {/* Form Fields */}
               {!isLogin && (
                 <View className="mb-5">
                   <Text className="text-neutral-700 font-medium mb-2">
@@ -236,13 +226,11 @@ export default function AuthForm({
                 />
               </View>
 
-              {/* Action Buttons */}
-              <View className={`flex-row ${showCancelButton ? 'space-x-3' : ''}`}>
-                {/* Submit Button */}
+              <View className="flex-row gap-3">
                 <TouchableOpacity
                   style={{
                     flex: showCancelButton ? 2 : 1,
-                    paddingVertical: 16,
+                    paddingVertical: showCancelButton ? 14 : 16,
                     borderRadius: 12,
                     backgroundColor: authLoading ? '#d1d5db' : '#3b82f6'
                   }}
@@ -256,19 +244,18 @@ export default function AuthForm({
                       color: 'white',
                       fontWeight: '600',
                       textAlign: 'center',
-                      fontSize: 18
+                      fontSize: showCancelButton ? 16 : 18
                     }}>
                       {isLogin ? 'Accedi' : 'Registrati'}
                     </Text>
                   )}
                 </TouchableOpacity>
 
-                {/* Cancel Button - Solo se showCancelButton è true */}
                 {showCancelButton && (
                   <TouchableOpacity
                     style={{
                       flex: 1,
-                      paddingVertical: 16,
+                      paddingVertical: 14,
                       borderRadius: 12,
                       borderWidth: 2,
                       borderColor: '#e5e5e5',

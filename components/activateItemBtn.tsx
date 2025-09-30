@@ -116,7 +116,6 @@ const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
     setIsLoading(true);
     
     try {
-      console.log(`🔄 Attivazione ${itemName} con durata: ${customDuration || 'default'} giorni`);
       
       const { success, error, item } = await ItemService.activateItem(itemName, customDuration);
       
@@ -155,7 +154,6 @@ const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
     setIsLoading(true);
     
     try {
-      console.log(`🔄 Disattivazione ${itemName}`);
       
       const { success, error } = await ItemService.deactivateItem(itemName);
       

@@ -29,7 +29,8 @@ export default function Search() {
         category: item.category,
         duration:item.duration_days,
         link: item.link,
-        icon: item.icon
+        icon: item.icon,
+        icon_family: item.icon_family
       }
     });
   };

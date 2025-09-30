@@ -1,5 +1,6 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Item } from '@/models/item';
+import { renderIcon } from '@/utils/iconRenderer';
 import React from 'react';
 import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
 
@@ -14,7 +15,6 @@ interface ItemPreviewProps {
 export function ItemPreview({ items, loading, error, onItemPress, onRetry }: ItemPreviewProps) {
   const { user, loading: authLoading } = useAuth();
 
-  // Funzione per calcolare giorni rimanenti
   const getDaysRemaining = (expiredAt: string | null): number => {
     if (!expiredAt) return 0;
     const now = new Date();
@@ -24,22 +24,19 @@ export function ItemPreview({ items, loading, error, onItemPress, onRetry }: Ite
     return Math.max(0, diffDays);
   };
 
-  // Funzione per ottenere il colore in base ai giorni rimanenti
   const getStatusColor = (daysRemaining: number): string => {
-    if (daysRemaining <= 0) return 'text-red-600 bg-red-100';
-    if (daysRemaining <= 7) return 'text-orange-600 bg-orange-100';
-    if (daysRemaining <= 30) return 'text-yellow-600 bg-yellow-100';
-    return 'text-green-600 bg-green-100';
+    if (daysRemaining <= 0) return 'text-red-600';
+    if (daysRemaining <= 7) return 'text-orange-600';
+    if (daysRemaining <= 30) return 'text-yellow-600';
+    return 'text-green-600';
   };
 
-  // Funzione per ottenere il testo dello status
   const getStatusText = (daysRemaining: number): string => {
     if (daysRemaining <= 0) return 'Scaduto';
     if (daysRemaining === 1) return '1 giorno';
     return `${daysRemaining} giorni`;
   };
 
-  // Loading solo se non ci sono dati e si sta caricando per la prima volta
   if (loading && items.length === 0) {
     return (
       <View className="flex-1 justify-center items-center py-12">
@@ -84,64 +81,28 @@ export function ItemPreview({ items, loading, error, onItemPress, onRetry }: Ite
 
     return (
       <TouchableOpacity 
-        className="bg-white p-4 mb-3 rounded-xl shadow-sm border border-neutral-100"
+        className="bg-white p-4 m-1 rounded-xl shadow-sm border border-neutral-100 flex-1"
+        style={{ maxWidth: '32%' }}
         onPress={() => onItemPress(item)}
         disabled={authLoading}
         activeOpacity={0.7}
       >
-        <View className="flex-row justify-between items-start mb-3">
-          <View className="flex-1 mr-3">
-            <Text className="text-lg font-semibold text-neutral-800 mb-1">{item.name}</Text>
-            <View className="bg-primary-100 px-3 py-1 rounded-full self-start">
-              <Text className="text-xs font-medium text-primary-700 capitalize">
-                {item.category.replace('_', ' ')}
-              </Text>
-            </View>
-          </View>
-          
-          <View className={`px-3 py-1 rounded-full ${statusColor}`}>
-            <Text className="text-xs font-medium">
-              {statusText}
-            </Text>
-          </View>
+        <View className="items-center mb-2">
+          {renderIcon({ 
+            family: item.icon_family, 
+            name: item.icon, 
+            size: 40, 
+            color: '#3b82f6' 
+          })}
         </View>
         
-        <View className="flex-row items-center justify-between mb-2">
-          <View className="flex-row items-center">
-            <View className="w-2 h-2 bg-primary-500 rounded-full mr-2" />
-            <Text className="text-sm font-medium text-primary-600">
-              Ogni {item.duration_days} giorni
-            </Text>
-          </View>
-          
-          {item.expired_at && (
-            <Text className="text-xs text-neutral-500">
-              Scade il {new Date(item.expired_at).toLocaleDateString('it-IT')}
-            </Text>
-          )}
-        </View>
-        
-        <Text className="text-sm text-neutral-600 leading-5" numberOfLines={2}>
-          {item.description}
+        <Text className="text-sm font-semibold text-neutral-800 text-center mb-2" numberOfLines={2}>
+          {item.name}
         </Text>
-
-        {/* Barra di progresso visiva */}
-        {item.expired_at && (
-          <View className="mt-3">
-            <View className="h-2 bg-neutral-100 rounded-full overflow-hidden">
-              <View 
-                className={`h-full rounded-full ${
-                  daysRemaining <= 0 ? 'bg-red-500' : 
-                  daysRemaining <= 7 ? 'bg-orange-500' : 
-                  daysRemaining <= 30 ? 'bg-yellow-500' : 'bg-green-500'
-                }`}
-                style={{ 
-                  width: `${Math.min(100, Math.max(10, (daysRemaining / item.duration_days) * 100))}%` 
-                }}
-              />
-            </View>
-          </View>
-        )}
+        
+        <Text className={`text-xs font-medium text-center ${statusColor}`}>
+          {statusText}
+        </Text>
       </TouchableOpacity>
     );
   };
@@ -163,14 +124,16 @@ export function ItemPreview({ items, loading, error, onItemPress, onRetry }: Ite
       data={items}
       keyExtractor={(item) => `${item.name}-${item.owner}`}
       renderItem={renderItem}
+      numColumns={3}
+      columnWrapperStyle={{ justifyContent: 'space-between' }}
       contentContainerStyle={{ 
         paddingBottom: 20, 
-        paddingHorizontal: 20,
+        paddingHorizontal: 16,
         flexGrow: 1 
       }}
       showsVerticalScrollIndicator={false}
       ListEmptyComponent={items.length === 0 ? renderEmptyState : null}
-      scrollEnabled={false} // Disabilita scroll interno per lasciare gestione al ScrollView padre
+      scrollEnabled={false}
     />
   );
 }

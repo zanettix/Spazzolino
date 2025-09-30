@@ -82,7 +82,6 @@ export const useNotifications = () => {
     }
 
     if (user && !authLoading) {
-      console.log('👤 Utente autenticato trovato, inizializzazione notifiche...');
       initializeNotifications();
     }
   }, [user?.id, authLoading]); 
