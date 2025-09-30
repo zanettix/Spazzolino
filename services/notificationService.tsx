@@ -1,7 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { Item } from '../models/item';
 
-
 export class NotificationService {
   
   static async initializeNotifications(): Promise<boolean> {

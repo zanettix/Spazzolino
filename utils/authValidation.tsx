@@ -1,9 +1,6 @@
 import { UserLogin } from '@/types/userLogin';
 import { UserRegistration } from '@/types/userRegistration';
-interface ValidationResult {
-  isValid: boolean;
-  errors: string[];
-}
+import { ValidationResult } from '@/types/validationResult';
 
 export class AuthValidation {
 

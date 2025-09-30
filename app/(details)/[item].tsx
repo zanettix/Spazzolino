@@ -1,6 +1,11 @@
+import AuthWrapper from '@/components/authForm';
+import ActivateItemBtn from '@/components/button/activateItemBtn';
+import RenewItemBtn from '@/components/button/renewItemBtn';
+import { ItemService } from '@/services/itemService';
+import { renderIcon } from '@/utils/iconRenderer';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Linking,
@@ -11,9 +16,6 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ActivateItemBtn from '../../components/activateItemBtn';
-import AuthWrapper from '../../components/authForm';
-import { renderIcon } from '../../utils/iconRenderer';
 
 export default function Item() {
   const { 
@@ -30,6 +32,33 @@ export default function Item() {
   
   const [customDuration, setCustomDuration] = useState(duration?.toString() || '');
   const [isEditingDuration, setIsEditingDuration] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
+  const [isActivated, setIsActivated] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(true);
+
+  useEffect(() => {
+    checkItemStatus();
+  }, [item]);
+
+  const checkItemStatus = async () => {
+    setCheckingStatus(true);
+    
+    const { activated } = await ItemService.isItemActivated(item?.toString() || '');
+    setIsActivated(activated);
+
+    if (activated) {
+      const { data: userItems } = await ItemService.getUserItems();
+      const currentItem = userItems?.find(i => i.name === item);
+      
+      if (currentItem?.expired_at) {
+        const now = new Date();
+        const expiry = new Date(currentItem.expired_at);
+        setIsExpired(expiry < now);
+      }
+    }
+    
+    setCheckingStatus(false);
+  };
 
   const handleOpenLink = async () => {
     if (link && typeof link === 'string') {
@@ -132,19 +161,21 @@ export default function Item() {
               <Text className="text-neutral-600 font-inter-semibold text-lg">
                 Frequenza Sostituzione
               </Text>
-              <TouchableOpacity
-                onPress={isEditingDuration ? handleSaveDuration : () => setIsEditingDuration(true)}
-                className="bg-neutral-100 rounded-full px-3 py-1"
-              >
-                <Text className="text-neutral-600 font-inter text-sm">
-                  {isEditingDuration ? 'Salva' : 'Modifica'}
-                </Text>
-              </TouchableOpacity>
+              {!isExpired && (
+                <TouchableOpacity
+                  onPress={isEditingDuration ? handleSaveDuration : () => setIsEditingDuration(true)}
+                  className="bg-neutral-100 rounded-full px-3 py-1"
+                >
+                  <Text className="text-neutral-600 font-inter text-sm">
+                    {isEditingDuration ? 'Salva' : 'Modifica'}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
             
             <View className="flex-row items-center">
               <Text className="text-neutral-700 font-inter">Ogni </Text>
-              {isEditingDuration ? (
+              {isEditingDuration && !isExpired ? (
                 <TextInput
                   value={customDuration}
                   onChangeText={setCustomDuration}
@@ -176,10 +207,17 @@ export default function Item() {
           </View>
 
           <View className="mx-4 my-6">
-            <ActivateItemBtn
-              itemName={item?.toString() || ''}
-              customDuration={getFinalDuration()}
-            />
+            {!checkingStatus && isActivated && isExpired ? (
+              <RenewItemBtn
+                itemName={item?.toString() || ''}
+                currentDuration={getFinalDuration()}
+              />
+            ) : (
+              <ActivateItemBtn
+                itemName={item?.toString() || ''}
+                customDuration={getFinalDuration()}
+              />
+            )}
           </View>
         </ScrollView>
       </SafeAreaView>

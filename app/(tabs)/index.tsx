@@ -1,11 +1,11 @@
-import { AuthBtn } from "@/components/authBtn";
+import { AuthBtn } from "@/components/button/authBtn";
 import { ItemPreview } from "@/components/itemPreview";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserItems } from "@/hooks/useItems";
 import { Item } from "@/models/item";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback } from "react";
-import { RefreshControl, ScrollView, Text, View } from "react-native";
+import { Platform, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Index() {
@@ -78,22 +78,6 @@ export default function Index() {
           <Text className="text-sm text-neutral-600 mx-1">
             {stats.total} oggett{stats.total === 1 ? 'o attivo' : 'i attivi'}
           </Text>
-          {stats.expired > 0 && (
-            <>
-              <Text className="text-neutral-300 mx-1">•</Text>
-              <Text className="text-sm text-red-600 font-medium mx-1">
-                {stats.expired} scadut{stats.expired === 1 ? 'o' : 'i'}
-              </Text>
-            </>
-          )}
-          {stats.expiringSoon > 0 && (
-            <>
-              <Text className="text-neutral-300 mx-1">•</Text>
-              <Text className="text-sm text-orange-600 font-medium mx-1">
-                {stats.expiringSoon} in scadenza
-              </Text>
-            </>
-          )}
         </View>
       ) : (
         <Text className="text-base text-neutral-600 text-center">
@@ -105,8 +89,8 @@ export default function Index() {
 
   if (!user && !authLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-neutral-50">
-        <View className="flex-1 justify-center items-center px-5">
+      <SafeAreaView className="flex-1 bg-neutral-50" edges={['top']}>
+        <View className="flex-1 justify-center items-center px-5" style={{ paddingBottom: Platform.OS === 'ios' ? 100 : 80 }}>
           <Text className="text-2xl font-bold text-neutral-900 mb-2 text-center">
             Benvenuto in Spazzolino!
           </Text>
@@ -120,7 +104,7 @@ export default function Index() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50">
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top']}>
       <ScrollView
         className="flex-1"
         refreshControl={
@@ -134,7 +118,10 @@ export default function Index() {
           />
         }
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={{ 
+          flexGrow: 1,
+          paddingBottom: Platform.OS === 'ios' ? 100 : 80
+        }}
       >
         {renderHeader()}
         

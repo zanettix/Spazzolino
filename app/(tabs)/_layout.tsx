@@ -1,13 +1,12 @@
-import { Ionicons } from '@expo/vector-icons'
-import { Tabs } from 'expo-router'
-import React from 'react'
+import { CustomTabBar } from '@/components/CustomTabBar';
+import { Tabs } from 'expo-router';
+import React from 'react';
 
 const _layout = () => {
   return (
     <Tabs
+      tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: '#2563eb', // primary-600
-        tabBarInactiveTintColor: '#6b7280', // neutral-500
         headerShown: false,
       }}
     >
@@ -15,40 +14,28 @@ const _layout = () => {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
           title: 'Search',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search" size={size} color={color} />
-          ),
         }}
       />
       <Tabs.Screen
         name="stats"
         options={{
           title: 'Stats',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="trending-up" size={size} color={color} />
-          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
         }}
       />
     </Tabs>
-  )
-}
+  );
+};
 
-export default _layout
+export default _layout;
