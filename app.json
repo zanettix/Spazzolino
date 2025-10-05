@@ -9,17 +9,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/icons/main_icon.jpg",
-        "backgroundImage": "./assets/icons/main_icon.jpg",
-        "monochromeImage": "./assets/icons/main_icon.jpg"
-      },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "supportsTablet": true,
+      "bundleIdentifier": "com.spazzolino.app",
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"]
+      }
     },
     "web": {
       "output": "static",
@@ -40,12 +34,7 @@
         }
       ],
       [
-        "expo-notifications",
-        {
-          "icon": "./assets/icons/main_icon.jpg",
-          "color": "#3b82f6",
-          "defaultChannel": "spazzolino-reminders"
-        }
+        "expo-notifications"
       ]
     ],
     "experiments": {

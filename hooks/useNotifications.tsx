@@ -2,6 +2,7 @@ import { ItemService } from '@/services/itemService';
 import { NotificationService } from '@/services/notificationService';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 import { useAuth } from './useAuth';
 
 export interface NotificationState {
@@ -26,7 +27,34 @@ export const useNotifications = () => {
     lastUserId: null as string | null,
   });
 
+  const syncNotifications = async () => {
+    if (Platform.OS !== 'ios' || !user) {
+      return;
+    }
+
+    try {
+      const { data: userItems, error } = await ItemService.getUserItems();
+      
+      if (error || !userItems) {
+        return;
+      }
+
+      await NotificationService.syncNotifications(userItems);
+    } catch (error) {
+    }
+  };
+
   const initializeNotifications = async () => {
+    if (Platform.OS !== 'ios') {
+      setState({
+        isInitialized: false,
+        hasPermissions: false,
+        isLoading: false,
+        error: 'Notifiche supportate solo su iOS',
+      });
+      return;
+    }
+
     if (authLoading || 
         initRef.current.isInitializing || 
         (initRef.current.hasInitialized && initRef.current.lastUserId === user?.id)) {
@@ -56,12 +84,10 @@ export const useNotifications = () => {
         error: permissionsGranted ? null : 'Permessi notifiche non concessi',
       });
 
-      // Aggiorna i riferimenti
       initRef.current.hasInitialized = true;
       initRef.current.lastUserId = user.id;
 
     } catch (error) {
-      console.error('Errore inizializzazione notifiche:', error);
       setState({
         isInitialized: false,
         hasPermissions: false,
@@ -73,7 +99,6 @@ export const useNotifications = () => {
     }
   };
 
-  // Effect che si attiva solo quando cambia l'utente autenticato
   useEffect(() => {
     if (initRef.current.lastUserId && initRef.current.lastUserId !== user?.id) {
       initRef.current.hasInitialized = false;
@@ -83,10 +108,14 @@ export const useNotifications = () => {
 
     if (user && !authLoading) {
       initializeNotifications();
+      syncNotifications();
     }
   }, [user?.id, authLoading]); 
 
   useEffect(() => {
+    if (Platform.OS !== 'ios') {
+      return;
+    }
 
     const notificationListener = Notifications.addNotificationReceivedListener(notification => {
     });
@@ -101,6 +130,10 @@ export const useNotifications = () => {
   }, []); 
 
   const requestPermissions = async (): Promise<boolean> => {
+    if (Platform.OS !== 'ios') {
+      return false;
+    }
+
     try {
       setState(prev => ({ ...prev, isLoading: true }));
       
@@ -114,12 +147,11 @@ export const useNotifications = () => {
       }));
 
       if (granted && user) {
-        await ItemService.syncNotifications();
+        await syncNotifications();
       }
 
       return granted;
     } catch (error) {
-      console.error('Errore richiesta permessi:', error);
       setState(prev => ({
         ...prev,
         isLoading: false,

@@ -244,24 +244,4 @@ export class ItemService {
       return { data: null, error: 'Errore imprevisto nel recupero oggetti utente' };
     }
   }
-
-  static async syncNotifications(): Promise<{ success: boolean; synchronized: number; error: string | null }> {
-    try {
-      const { data: userItems, error } = await this.getUserItems();
-      
-      if (error || !userItems) {
-        return { success: false, synchronized: 0, error: error || 'Nessun oggetto trovato' };
-      }
-
-      const result = await NotificationService.scheduleNotificationsForAllItems(userItems);
-      
-      return { 
-        success: true, 
-        synchronized: result.success, 
-        error: result.failed > 0 ? `${result.failed} oggetti non sincronizzati` : null 
-      };
-    } catch (error) {
-      return { success: false, synchronized: 0, error: 'Errore imprevisto nella sincronizzazione' };
-    }
-  }
 }

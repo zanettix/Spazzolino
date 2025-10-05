@@ -1,12 +1,19 @@
-import React from 'react';
+import { WelcomeScreen } from '@/components/welcomeScreen';
+import { useAuth } from '@/hooks/useAuth';
 import { Text, View } from 'react-native';
 
-const stats = () => {
+const Stats = () => {
+  const { user, loading: authLoading } = useAuth();
+
+  if (!user && !authLoading) {
+    return <WelcomeScreen />;
+  }
+
   return (
     <View>
       <Text>stats</Text>
     </View>
-  )
-}
+  );
+};
 
-export default stats
+export default Stats;

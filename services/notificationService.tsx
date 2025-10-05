@@ -1,31 +1,37 @@
 import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
 import { Item } from '../models/item';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 export class NotificationService {
   
   static async initializeNotifications(): Promise<boolean> {
+    if (Platform.OS !== 'ios') {
+      return false;
+    }
 
     try {
-        await Notifications.setNotificationChannelAsync('spazzolino-expiry', {
-          name: 'Scadenze Spazzolino',
-          description: 'Notifiche per oggetti scaduti',
-          importance: Notifications.AndroidImportance.MAX,
-          vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#ef4444',
-          sound: 'default',
-          enableLights: true,
-          enableVibrate: true,
-        });
-
       const permissionGranted = await this.requestPermissions();
       return permissionGranted;
     } catch (error) {
-      console.error(error);
       return false;
     }
   }
 
   static async requestPermissions(): Promise<boolean> {
+    if (Platform.OS !== 'ios') {
+      return false;
+    }
+
     try {
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
@@ -34,23 +40,25 @@ export class NotificationService {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
-      return true;
+      
+      return finalStatus === 'granted';
     } catch (error) {
-      console.error('Errore nella richiesta permessi:', error);
       return false;
     }
   }
 
   static async scheduleNotificationsForItem(item: Item): Promise<boolean> {
-    try {
+    if (Platform.OS !== 'ios') {
+      return false;
+    }
 
+    try {
       await this.cancelNotificationsForItem(item.name, item.owner);
 
       const expiredDate = new Date(item.expired_at);
       const now = new Date();
 
       if (expiredDate <= now) {
-        console.warn(`Oggetto ${item.name} già scaduto, nessuna notifica programmata`);
         return false;
       }
 
@@ -61,60 +69,55 @@ export class NotificationService {
 
       if (reminderDate > now) {
         const reminderIdentifier = `reminder_${item.name}_${item.owner}`;
+        const secondsUntilReminder = Math.floor((reminderDate.getTime() - now.getTime()) / 1000);
         
-        // notifica anticipata 7 giorni prima
+        if (secondsUntilReminder > 0) {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: `Promemoria: ${item.name}`,
+              body: `Tra una settimana dovresti sostituire il tuo ${item.name.toLowerCase()}. Preparati!`,
+              data: {
+                itemName: item.name,
+                type: 'reminder',
+                daysUntilExpiry: 7,
+                owner: item.owner
+              },
+              sound: true,
+            },
+            trigger: reminderDate as any,
+            identifier: reminderIdentifier,
+          });
+
+          notificationsScheduled++;
+        }
+      }
+
+      const expiryIdentifier = `expiry_${item.name}_${item.owner}`;
+      const secondsUntilExpiry = Math.floor((expiredDate.getTime() - now.getTime()) / 1000);
+      
+      if (secondsUntilExpiry > 0) {
         await Notifications.scheduleNotificationAsync({
           content: {
-            title: `Promemoria: ${item.name}`,
-            body: `Tra una settimana dovresti sostituire il tuo ${item.name.toLowerCase()}. Preparati!`,
+            title: `È tempo di sostituire: ${item.name}`,
+            body: `Oggi è il giorno ideale per sostituire il tuo ${item.name.toLowerCase()}. La tua salute ti ringrazierà!`,
             data: {
               itemName: item.name,
-              type: 'reminder',
-              daysUntilExpiry: 7,
+              type: 'expiry',
+              daysUntilExpiry: 0,
               owner: item.owner
             },
-            categoryIdentifier: 'REMINDER_CATEGORY',
-            sound: 'default',
+            sound: true,
           },
-          trigger: {
-            date: reminderDate,
-            channelId: 'spazzolino-reminders',
-          },
-          identifier: reminderIdentifier,
+          trigger: expiredDate as any,
+          identifier: expiryIdentifier,
         });
 
         notificationsScheduled++;
       }
 
-      const expiryIdentifier = `expiry_${item.name}_${item.owner}`;
-      
-      // notifica il giorno della scadenza
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: `È tempo di sostituire: ${item.name}`,
-          body: `Oggi è il giorno ideale per sostituire il tuo ${item.name.toLowerCase()}. La tua salute ti ringrazierà!`,
-          data: {
-            itemName: item.name,
-            type: 'expiry',
-            daysUntilExpiry: 0,
-            owner: item.owner
-          },
-          categoryIdentifier: 'EXPIRY_CATEGORY',
-          sound: 'default',
-        },
-        trigger: {
-          date: expiredDate,
-          channelId: 'spazzolino-expiry',
-        },
-        identifier: expiryIdentifier,
-      });
-
-      notificationsScheduled++;
-
       return notificationsScheduled > 0;
 
     } catch (error) {
-      console.error(error);
       return false;
     }
   }
@@ -138,7 +141,6 @@ export class NotificationService {
       }
 
     } catch (error) {
-      console.error(error);
     }
   }
 
@@ -146,7 +148,6 @@ export class NotificationService {
     try {
       return await Notifications.getAllScheduledNotificationsAsync();
     } catch (error) {
-      console.error('Errore nel recupero notifiche programmate:', error);
       return [];
     }
   }
@@ -158,13 +159,11 @@ export class NotificationService {
         notification.identifier.includes(`_${owner}`)
       );
     } catch (error) {
-      console.error('Errore nel recupero notifiche utente:', error);
       return [];
     }
   }
 
   static async scheduleNotificationsForAllItems(items: Item[]): Promise<{ success: number; failed: number }> {
-    
     let success = 0;
     let failed = 0;
 
@@ -177,5 +176,38 @@ export class NotificationService {
       }
     }
     return { success, failed };
+  }
+
+  static async syncNotifications(userItems: Item[]): Promise<{ success: boolean; synchronized: number; error: string | null }> {
+    try {
+      if (!userItems || userItems.length === 0) {
+        return { success: false, synchronized: 0, error: 'Nessun oggetto trovato' };
+      }
+
+      const scheduledNotifications = await this.getScheduledNotifications();
+      const validItemNames = new Set(userItems.map(item => item.name));
+      
+      for (const notification of scheduledNotifications) {
+        const parts = notification.identifier.split('_');
+        
+        if (parts.length >= 3) {
+          const itemName = parts.slice(1, -1).join('_');
+          
+          if (!validItemNames.has(itemName)) {
+            await this.cancelNotificationsForItem(itemName);
+          }
+        }
+      }
+
+      const result = await this.scheduleNotificationsForAllItems(userItems);
+      
+      return { 
+        success: true, 
+        synchronized: result.success, 
+        error: result.failed > 0 ? `${result.failed} oggetti non sincronizzati` : null 
+      };
+    } catch (error) {
+      return { success: false, synchronized: 0, error: 'Errore imprevisto nella sincronizzazione' };
+    }
   }
 }
