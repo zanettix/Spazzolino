@@ -3,8 +3,8 @@ import { ItemPreview } from "@/components/itemPreview";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserItems } from "@/hooks/useItems";
 import { Item } from "@/models/item";
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useRouter } from "expo-router";
+import { useEffect } from "react";
 import { Platform, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -18,13 +18,11 @@ export default function Index() {
     refreshUserItems
   } = useUserItems();
 
-  useFocusEffect(
-    useCallback(() => {
-      if (user) {
-        refreshUserItems();
-      }
-    }, [user?.id])
-  );
+  useEffect(() => {
+    if (user) {
+      refreshUserItems();
+    }
+  }, [user?.id]);
 
   const handleItemPress = (item: Item) => {
     router.push({

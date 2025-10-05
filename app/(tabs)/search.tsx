@@ -1,10 +1,11 @@
 import { CatalogPreview } from "@/components/catalogPreview";
+import Filter from "@/components/filter";
 import SearchBar from "@/components/searchBar";
 import { useCatalog } from "@/hooks/useCatalog";
 import { Item } from "@/models/item";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { Text, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Platform, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Search() {
@@ -16,9 +17,9 @@ export default function Search() {
     refreshCatalog
   } = useCatalog();
 
-  // Stato per i risultati della ricerca
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterResults, setFilterResults] = useState<Item[]>([]);
+  const [isFilterActive, setIsFilterActive] = useState(false);
 
   const handleItemPress = (item: Item) => {
     router.push({
@@ -27,7 +28,7 @@ export default function Search() {
         item: item.name,
         description: item.description,
         category: item.category,
-        duration:item.duration_days,
+        duration: item.duration_days,
         link: item.link,
         icon: item.icon,
         icon_family: item.icon_family
@@ -35,14 +36,31 @@ export default function Search() {
     });
   };
 
-  // Gestisce i risultati della ricerca
-  const handleSearchResults = (results: any[]) => {
-    setSearchResults(results);
-    setIsSearchActive(results.length > 0);
+  const handleFilterChange = (filtered: Item[]) => {
+    setFilterResults(filtered);
+    setIsFilterActive(true);
   };
 
-  // Determina quali dati mostrare: risultati ricerca o catalogo completo
-  const displayData = isSearchActive ? searchResults : catalog;
+  const handleResetFilter = () => {
+    setIsFilterActive(false);
+    setFilterResults([]);
+  };
+
+  const baseDataForSearch = isFilterActive ? filterResults : catalog;
+
+  const displayData = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return baseDataForSearch;
+    }
+
+    const lowercaseQuery = searchQuery.toLowerCase();
+    
+    return baseDataForSearch.filter(item => 
+      item.name.toLowerCase().includes(lowercaseQuery) ||
+      (item.description && item.description.toLowerCase().includes(lowercaseQuery)) ||
+      (item.category && item.category.toLowerCase().includes(lowercaseQuery))
+    );
+  }, [searchQuery, baseDataForSearch]);
 
   const renderHeader = () => (
     <View className="mb-6 px-5">
@@ -52,39 +70,66 @@ export default function Search() {
       <Text className="text-base text-neutral-600 text-center">
         {loading 
           ? 'Caricamento...' 
-          : isSearchActive 
-            ? `${searchResults.length} risultat${searchResults.length === 1 ? 'o trovato' : 'i trovati'}`
-            : `${catalog.length} oggett${catalog.length === 1 ? 'o' : 'i'} disponibili`
+          : `${displayData.length} oggett${displayData.length === 1 ? 'o' : 'i'} disponibili`
         }
       </Text>
     </View>
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50">
-      <View className="flex-1 pt-4">
-        {/* Header */}
-        {renderHeader()}
-        
-        {/* Search Bar - Solo ricerca nel catalogo */}
-        {!loading && !error && (
-          <SearchBar
-            onFilteredData={handleSearchResults}
-            placeholder="Cerca per nome, categoria o descrizione"
-            defaultSearchType="catalog"
-            showTabs={false} // Nascondi i tabs dato che cerchiamo solo nel catalogo
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top']}>
+      <ScrollView
+        className="flex-1"
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={refreshCatalog}
+            tintColor="#3b82f6"
+            colors={["#3b82f6"]}
+            title="Aggiornamento catalogo..."
+            titleColor="#737373"
           />
-        )}
-        
-        {/* Lista oggetti con CatalogPreview */}
-        <CatalogPreview
-          items={displayData}
-          loading={loading}
-          error={error}
-          onItemPress={handleItemPress}
-          onRetry={refreshCatalog}
-        />
-      </View>
+        }
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ 
+          flexGrow: 1,
+          paddingBottom: Platform.OS === 'ios' ? 100 : 80
+        }}
+      >
+        <View className="pt-4">
+          {renderHeader()}
+          
+          {!loading && !error && (
+            <View className="px-5 mb-4">
+              <View className="flex-row items-start gap-3">
+                <View className="flex-1">
+                  <SearchBar
+                    searchQuery={searchQuery}
+                    onSearchQueryChange={setSearchQuery}
+                    placeholder="Cerca"
+                  />
+                </View>
+                
+                <Filter 
+                  onFilterChange={handleFilterChange}
+                  allItems={catalog}
+                  onReset={handleResetFilter}
+                />
+              </View>
+            </View>
+          )}
+          
+          <View className="flex-1">
+            <CatalogPreview
+              items={displayData}
+              loading={false}
+              error={error}
+              onItemPress={handleItemPress}
+              onRetry={refreshCatalog}
+            />
+          </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

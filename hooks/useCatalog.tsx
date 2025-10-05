@@ -7,13 +7,10 @@ interface UseCatalogReturn {
   loading: boolean;
   error: string | null;
   refreshCatalog: () => Promise<void>;
-  searchCatalog: (query: string) => Promise<void>;
-  filteredCatalog: Item[];
 }
 
 export function useCatalog(): UseCatalogReturn {
   const [catalog, setCatalog] = useState<Item[]>([]);
-  const [filteredCatalog, setFilteredCatalog] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +27,6 @@ export function useCatalog(): UseCatalogReturn {
       }
       
       setCatalog(data || []);
-      setFilteredCatalog(data || []);
     } catch (err) {
       setError('Errore nel caricamento del catalogo');
     } finally {
@@ -42,16 +38,6 @@ export function useCatalog(): UseCatalogReturn {
     await loadCatalog();
   };
 
-  const searchCatalog = async (query: string) => {
-    if (!query.trim()) {
-      setFilteredCatalog(catalog);
-      return;
-    }
-
-    const { data } = await ItemService.searchCatalog(query);
-    if (data) setFilteredCatalog(data);
-  };
-
   useEffect(() => {
     loadCatalog();
   }, []);
@@ -60,8 +46,6 @@ export function useCatalog(): UseCatalogReturn {
     catalog,
     loading,
     error,
-    refreshCatalog,
-    searchCatalog,
-    filteredCatalog
+    refreshCatalog
   };
 }

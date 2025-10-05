@@ -11,7 +11,6 @@ export class ItemService {
         .order('category, name');
 
       if (error) {
-        console.error('Errore nel recupero catalogo:', error);
         return { data: null, error: error.message };
       }
       return { data: data || [], error: null };
@@ -44,11 +43,14 @@ export class ItemService {
     }
 
   static async searchUserItem(query: string, userId?: string): Promise<{ data: any[] | null; error: string | null }> {
-    let supabaseQuery = supabase
+    const { data, error } = await supabase
       .from('user_items')
       .select(`
         name,
         duration_days,
+        created_at,
+        expired_at,
+        owner,
         catalog!user_items_name_fkey (
           category,
           description,
@@ -56,32 +58,33 @@ export class ItemService {
           icon,
           icon_family
         )
-      `);
-
-    const { data, error } = await supabaseQuery
+      `)
       .or(`name.ilike.%${query}%,catalog.description.ilike.%${query}%,catalog.category.ilike.%${query}%`)
       .order('name');
 
     if (error) {
-      console.error('Errore nella ricerca user_items:', error);
       return { data: null, error: error.message };
     }
 
-    const transformedData = data?.map(item => ({
-      name: item.name,
-      duration_days: item.duration_days,
-      category: item.catalog?.[0]?.category,
-      description: item.catalog?.[0]?.description,
-      link: item.catalog?.[0]?.link,
-      icon: item.catalog?.[0]?.icon,
-      icon_family: item.catalog?.[0]?.icon_family
-    })) || [];
-    return { data: transformedData, error: null };
+    return { 
+      data: data?.map(item => ({
+        name: item.name,
+        duration_days: item.duration_days,
+        created_at: item.created_at,
+        expired_at: item.expired_at,
+        owner: item.owner,
+        category: item.catalog[0].category,
+        description: item.catalog[0].description,
+        link: item.catalog[0].link,
+        icon: item.catalog[0].icon,
+        icon_family: item.catalog[0].icon_family
+      })) || [], 
+      error: null 
+    };
   }
 
   static async activateItem(itemName: string, durationDays?: number): Promise<{ success: boolean; error: string | null; item?: Item }> {
     try {
-
       const { data, error } = await supabase
         .from('user_items')
         .insert({
@@ -101,34 +104,32 @@ export class ItemService {
         .single();
 
       if (error) {
-        console.error('Errore nell\'attivazione oggetto:', error);
         return { success: false, error: error.message };
       }
 
-      const item: Item = {
-        name: data.name,
-        category: data.catalog.category,
-        description: data.catalog.description,
-        link: data.catalog.link,
-        icon: data.catalog.icon,
-        icon_family: data.catalog.icon_family,
-        created_at: data.created_at,
-        duration_days: data.duration_days,
-        expired_at: data.expired_at,
-        owner: data.owner
+      return { 
+        success: true, 
+        error: null, 
+        item: {
+          name: data.name,
+          category: data.catalog.category,
+          description: data.catalog.description,
+          link: data.catalog.link,
+          icon: data.catalog.icon,
+          icon_family: data.catalog.icon_family,
+          created_at: data.created_at,
+          duration_days: data.duration_days,
+          expired_at: data.expired_at,
+          owner: data.owner
+        }
       };
-
-      return { success: true, error: null, item };
-
     } catch (error) {
-      console.error('Errore imprevisto nell\'attivazione:', error);
       return { success: false, error: 'Errore imprevisto durante l\'attivazione' };
     }
   }
 
   static async deactivateItem(itemName: string): Promise<{ success: boolean; error: string | null }> {
     try {
-
       await NotificationService.cancelNotificationsForItem(itemName);
 
       const { error } = await supabase
@@ -137,21 +138,17 @@ export class ItemService {
         .eq('name', itemName);
 
       if (error) {
-        console.error('Errore nella disattivazione oggetto:', error);
         return { success: false, error: error.message };
       }
 
       return { success: true, error: null };
-
     } catch (error) {
-      console.error('Errore imprevisto nella disattivazione:', error);
       return { success: false, error: 'Errore imprevisto durante la disattivazione' };
     }
   }
 
   static async updateItemDuration(itemName: string, newDurationDays: number): Promise<{ success: boolean; error: string | null; item?: Item }> {
     try {
-
       await NotificationService.cancelNotificationsForItem(itemName);
 
       const { data, error } = await supabase
@@ -171,27 +168,26 @@ export class ItemService {
         .single();
 
       if (error) {
-        console.error('Errore nell\'aggiornamento durata:', error);
         return { success: false, error: error.message };
       }
 
-      const updatedItem: Item = {
-        name: data.name,
-        category: data.catalog.category,
-        description: data.catalog.description,
-        link: data.catalog.link,
-        icon: data.catalog.icon,
-        icon_family: data.catalog.icon_family,
-        created_at: data.created_at,
-        duration_days: data.duration_days,
-        expired_at: data.expired_at,
-        owner: data.owner
+      return { 
+        success: true, 
+        error: null, 
+        item: {
+          name: data.name,
+          category: data.catalog.category,
+          description: data.catalog.description,
+          link: data.catalog.link,
+          icon: data.catalog.icon,
+          icon_family: data.catalog.icon_family,
+          created_at: data.created_at,
+          duration_days: data.duration_days,
+          expired_at: data.expired_at,
+          owner: data.owner
+        }
       };
-
-      return { success: true, error: null, item: updatedItem };
-
     } catch (error) {
-      console.error('Errore imprevisto nell\'aggiornamento:', error);
       return { success: false, error: 'Errore imprevisto durante l\'aggiornamento' };
     }
   }
@@ -203,12 +199,10 @@ export class ItemService {
           .eq('name', itemName);
 
         if (error) {
-          console.error('Errore nel controllo attivazione:', error);
           return { activated: false, error: error.message };
         }
-        const isActivated = data && data.length > 0;
         
-        return { activated: isActivated, error: null };
+        return { activated: data && data.length > 0, error: null };
   }
 
   static async getUserItems(): Promise<{ data: Item[] | null; error: string | null }> {
@@ -228,34 +222,31 @@ export class ItemService {
         .order('expired_at', { ascending: true });
 
       if (error) {
-        console.error('Errore nel recupero oggetti utente:', error);
         return { data: null, error: error.message };
       }
 
-      const items: Item[] = data.map(item => ({
-        name: item.name,
-        category: item.catalog.category,
-        description: item.catalog.description,
-        link: item.catalog.link,
-        icon: item.catalog.icon,
-        icon_family: item.catalog.icon_family,
-        created_at: item.created_at,
-        duration_days: item.duration_days,
-        expired_at: item.expired_at,
-        owner: item.owner
-      }));
-
-      return { data: items, error: null };
-
+      return { 
+        data: data.map(item => ({
+          name: item.name,
+          category: item.catalog.category,
+          description: item.catalog.description,
+          link: item.catalog.link,
+          icon: item.catalog.icon,
+          icon_family: item.catalog.icon_family,
+          created_at: item.created_at,
+          duration_days: item.duration_days,
+          expired_at: item.expired_at,
+          owner: item.owner
+        })), 
+        error: null 
+      };
     } catch (error) {
-      console.error('Errore imprevisto nel recupero oggetti utente:', error);
       return { data: null, error: 'Errore imprevisto nel recupero oggetti utente' };
     }
   }
 
   static async syncNotifications(): Promise<{ success: boolean; synchronized: number; error: string | null }> {
     try {
-
       const { data: userItems, error } = await this.getUserItems();
       
       if (error || !userItems) {
@@ -269,9 +260,7 @@ export class ItemService {
         synchronized: result.success, 
         error: result.failed > 0 ? `${result.failed} oggetti non sincronizzati` : null 
       };
-
     } catch (error) {
-      console.error('Errore nella sincronizzazione notifiche:', error);
       return { success: false, synchronized: 0, error: 'Errore imprevisto nella sincronizzazione' };
     }
   }
