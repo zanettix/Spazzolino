@@ -2,7 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Item } from '@/models/item';
 import { renderIcon } from '@/utils/iconRenderer';
 import React from 'react';
-import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Text, TouchableOpacity, View } from 'react-native';
 
 interface ItemPreviewProps {
   items: Item[];
@@ -12,7 +12,7 @@ interface ItemPreviewProps {
   onRetry?: () => void;
 }
 
-export function ItemPreview({ items, loading, error, onItemPress, onRetry }: ItemPreviewProps) {
+export function ItemPreview({ items, onItemPress}: ItemPreviewProps) {
   const { user, loading: authLoading } = useAuth();
 
   const getDaysRemaining = (expiredAt: string | null): number => {
@@ -37,43 +37,6 @@ export function ItemPreview({ items, loading, error, onItemPress, onRetry }: Ite
     return `${daysRemaining} giorni`;
   };
 
-  if (loading && items.length === 0) {
-    return (
-      <View className="flex-1 justify-center items-center py-12">
-        <ActivityIndicator size="large" color="#3b82f6" />
-        <Text className="text-neutral-600 mt-2">Caricamento oggetti attivi...</Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View className="flex-1 justify-center items-center py-12">
-        <Text className="text-lg font-medium text-red-600 mb-2">Errore</Text>
-        <Text className="text-sm text-neutral-600 text-center px-8 mb-4">{error}</Text>
-        {onRetry && (
-          <TouchableOpacity 
-            onPress={onRetry}
-            className="bg-primary-500 px-6 py-3 rounded-lg"
-          >
-            <Text className="text-white font-medium">Riprova</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    );
-  }
-
-  if (!user && !authLoading) {
-    return (
-      <View className="flex-1 justify-center items-center py-12">
-        <Text className="text-lg font-medium text-neutral-500 mb-2">Accesso richiesto</Text>
-        <Text className="text-sm text-neutral-400 text-center px-8">
-          Effettua l'accesso per vedere i tuoi oggetti attivi
-        </Text>
-      </View>
-    );
-  }
-
   const renderItem = ({ item }: { item: Item }) => {
     const daysRemaining = getDaysRemaining(item.expired_at || null);
     const statusColor = getStatusColor(daysRemaining);
@@ -81,8 +44,8 @@ export function ItemPreview({ items, loading, error, onItemPress, onRetry }: Ite
 
     return (
       <TouchableOpacity 
-        className="bg-white p-4 m-1 rounded-xl shadow-sm border border-neutral-100 flex-1"
-        style={{ maxWidth: '32%' }}
+        className="bg-white p-4 m-1 rounded-xl shadow-sm border border-neutral-100"
+        style={{ width: '31%' }}
         onPress={() => onItemPress(item)}
         disabled={authLoading}
         activeOpacity={0.7}
@@ -125,7 +88,7 @@ export function ItemPreview({ items, loading, error, onItemPress, onRetry }: Ite
       keyExtractor={(item) => `${item.name}-${item.owner}`}
       renderItem={renderItem}
       numColumns={3}
-      columnWrapperStyle={{ justifyContent: 'space-between' }}
+      columnWrapperStyle={{ justifyContent: 'flex-start' }}
       contentContainerStyle={{ 
         paddingBottom: 20, 
         paddingHorizontal: 16,

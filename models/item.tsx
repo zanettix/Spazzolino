@@ -7,6 +7,6 @@ export interface Item {
   duration_days: number; 
   expired_at: string; //created_at + duration_days
   icon: string;
-  icon_family: string | null; // Ionicons, MaterialCommunityIcons, etc.
+  icon_family: string; // Ionicons, MaterialCommunityIcons, etc.
   owner: string; // Distingue catalog da user_items
 }

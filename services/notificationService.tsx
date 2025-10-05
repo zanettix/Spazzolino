@@ -84,7 +84,11 @@ export class NotificationService {
               },
               sound: true,
             },
-            trigger: reminderDate as any,
+            trigger: {
+              type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+              seconds: secondsUntilReminder,
+              repeats: false,
+            },
             identifier: reminderIdentifier,
           });
 
@@ -108,7 +112,11 @@ export class NotificationService {
             },
             sound: true,
           },
-          trigger: expiredDate as any,
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            seconds: secondsUntilExpiry,
+            repeats: false,
+          },
           identifier: expiryIdentifier,
         });
 

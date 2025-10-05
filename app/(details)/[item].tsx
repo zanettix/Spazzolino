@@ -89,6 +89,8 @@ export default function Item() {
     return defaultNum > 0 ? defaultNum : undefined;
   };
 
+  const canEditDuration = !isActivated;
+
   return (
     <AuthWrapper 
       requireAuth={true}
@@ -161,7 +163,7 @@ export default function Item() {
               <Text className="text-neutral-600 font-inter-semibold text-lg">
                 Frequenza Sostituzione
               </Text>
-              {!isExpired && (
+              {canEditDuration && (
                 <TouchableOpacity
                   onPress={isEditingDuration ? handleSaveDuration : () => setIsEditingDuration(true)}
                   className="bg-neutral-100 rounded-full px-3 py-1"
@@ -175,7 +177,7 @@ export default function Item() {
             
             <View className="flex-row items-center">
               <Text className="text-neutral-700 font-inter">Ogni </Text>
-              {isEditingDuration && !isExpired ? (
+              {isEditingDuration && canEditDuration ? (
                 <TextInput
                   value={customDuration}
                   onChangeText={setCustomDuration}
@@ -200,7 +202,9 @@ export default function Item() {
               <View className="flex-row">
                 <Ionicons name="information-circle" size={16} color="#f59e0b" />
                 <Text className="text-warning text-sm font-inter ml-2 flex-1">
-                  Raccomandazione basata su studi scientifici. Puoi personalizzare secondo le tue esigenze.
+                  {canEditDuration 
+                    ? 'Raccomandazione basata su studi scientifici. Puoi personalizzare secondo le tue esigenze.'
+                    : 'La frequenza non può essere modificata quando l\'oggetto è attivo. Disattiva l\'oggetto per modificare la durata.'}
                 </Text>
               </View>
             </View>

@@ -122,14 +122,9 @@ const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
       if (success && item) {
         setIsActivated(true);
         
-        // Mostra messaggio di successo personalizzato in base ai permessi
-        const message = hasPermissions 
-          ? `${itemName} è stato attivato! 🎉\n\nRiceverai notifiche:\n• 7 giorni prima della scadenza\n• Il giorno della sostituzione\n\nScadenza: ${new Date(item.expired_at).toLocaleDateString('it-IT')}`
-          : `${itemName} è stato attivato!\n\nNota: Le notifiche non sono abilitate. Ricordati di sostituirlo entro il ${new Date(item.expired_at).toLocaleDateString('it-IT')}`;
-        
         Alert.alert(
           'Attivazione completata',
-          message,
+          `Riceverai notifiche:\n• 7 giorni prima della scadenza\n• Il giorno della sostituzione\n\nScadenza: ${new Date(item.expired_at).toLocaleDateString('it-IT')}`,
           [{ text: 'Perfetto!' }]
         );
       } else {
@@ -159,18 +154,8 @@ const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
       
       if (success) {
         setIsActivated(false);
-        Alert.alert(
-          'Oggetto disattivato',
-          `${itemName} è stato rimosso dai tuoi oggetti attivi. Non riceverai più notifiche per questo elemento.`,
-          [{ text: 'OK' }]
-        );
-      } else {
-        console.error('Errore disattivazione:', error);
-        Alert.alert(
-          'Errore durante la disattivazione',
-          error || 'Si è verificato un errore durante la disattivazione.'
-        );
       }
+      
     } catch (error) {
       console.error('Errore imprevisto:', error);
       Alert.alert(
@@ -232,22 +217,6 @@ const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
           </Text>
         </View>
       </TouchableOpacity>
-
-      {/* Indicatore stato notifiche */}
-      {isActivated && (
-        <View className="mt-2 flex-row items-center justify-center">
-          <Ionicons 
-            name={hasPermissions ? "notifications" : "notifications-off"} 
-            size={16} 
-            color={hasPermissions ? "#10b981" : "#f59e0b"} 
-          />
-          <Text className={`ml-2 text-sm font-inter-medium ${
-            hasPermissions ? 'text-success' : 'text-warning'
-          }`}>
-            {hasPermissions ? 'Notifiche attive' : 'Notifiche disabilitate'}
-          </Text>
-        </View>
-      )}
     </View>
   );
 };
