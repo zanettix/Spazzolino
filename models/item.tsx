@@ -1,4 +1,5 @@
 export interface Item {
+  id: string;
   name: string;
   category: "igiene_personale" | "cucina" | "bagno";
   description: string;

@@ -1,5 +1,6 @@
 import { useNotifications } from '@/hooks/useNotifications';
 import { ItemService } from '@/services/itemService';
+import { StatsService } from '@/services/statsService';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -46,18 +47,21 @@ const RenewItemBtn: React.FC<RenewItemBtnProps> = ({
     setIsLoading(true);
     
     try {
+      const { data: userItems } = await ItemService.getUserItems();
+      const currentItem = userItems?.find(i => i.name === itemName);
+      
+      if (currentItem?.id) {
+        await StatsService.recordHeatmapCompletion(currentItem.id);
+      }
+
       await ItemService.deactivateItem(itemName);
       
       const { success, error, item } = await ItemService.activateItem(itemName, currentDuration);
       
       if (success && item) {
-        const message = hasPermissions 
-          ? `${itemName} è stato rinnovato!\n\nRiceverai notifiche:\n• 7 giorni prima della scadenza\n• Il giorno della sostituzione\n\nNuova scadenza: ${new Date(item.expired_at).toLocaleDateString('it-IT')}`
-          : `${itemName} è stato rinnovato!\n\nNota: Le notifiche non sono abilitate.\n\nNuova scadenza: ${new Date(item.expired_at).toLocaleDateString('it-IT')}`;
-        
         Alert.alert(
           'Rinnovo completato',
-          message,
+          `${itemName} è stato rinnovato!\n\nRiceverai notifiche:\n• 7 giorni prima della scadenza\n• Il giorno della sostituzione\n\nNuova scadenza: ${new Date(item.expired_at).toLocaleDateString('it-IT')}`,
           [{ 
             text: 'OK',
             onPress: () => router.back()
@@ -83,6 +87,13 @@ const RenewItemBtn: React.FC<RenewItemBtnProps> = ({
     setIsLoading(true);
     
     try {
+      const { data: userItems } = await ItemService.getUserItems();
+      const currentItem = userItems?.find(i => i.name === itemName);
+      
+      if (currentItem?.id) {
+        await StatsService.recordHeatmapCompletion(currentItem.id);
+      }
+
       const { success, error } = await ItemService.deactivateItem(itemName);
       
       if (success) {

@@ -111,6 +111,7 @@ export class ItemService {
         success: true, 
         error: null, 
         item: {
+          id: data.id,
           name: data.name,
           category: data.catalog.category,
           description: data.catalog.description,
@@ -175,6 +176,7 @@ export class ItemService {
         success: true, 
         error: null, 
         item: {
+          id: data.id,
           name: data.name,
           category: data.catalog.category,
           description: data.catalog.description,
@@ -227,6 +229,7 @@ export class ItemService {
 
       return { 
         data: data.map(item => ({
+          id: item.id,
           name: item.name,
           category: item.catalog.category,
           description: item.catalog.description,

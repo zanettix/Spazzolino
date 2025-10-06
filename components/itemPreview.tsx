@@ -59,7 +59,7 @@ export function ItemPreview({ items, onItemPress}: ItemPreviewProps) {
           })}
         </View>
         
-        <Text className="text-sm font-semibold text-neutral-800 text-center mb-2" numberOfLines={2}>
+        <Text className="text-sm font-semibold text-neutral-800 text-center mb-2" numberOfLines={1}>
           {item.name}
         </Text>
         
