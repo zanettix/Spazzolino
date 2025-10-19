@@ -1,4 +1,5 @@
 import { supabase } from '@/utils/supabase';
+import { ItemService } from './itemService';
 
 interface HeatmapData {
   date: string;
@@ -183,6 +184,39 @@ static async incrementReplacementCount(itemName: string): Promise<{ success: boo
     return { success: true, error: null };
   } catch (error) {
     return { success: false, error: 'Errore nell\'incremento del contatore' };
+  }
+}
+
+static async getCategoryDistribution(): Promise<{ 
+  data: Array<{
+    category: string;
+    count: number;
+  }> | null; 
+  error: string | null 
+}> {
+  try {
+    const { data: userItems, error } = await ItemService.getUserItems();
+
+    if (error || !userItems) {
+      return { data: null, error: error || 'Errore nel recupero degli oggetti' };
+    }
+
+    const categoryCounts: { [key: string]: number } = {};
+
+    userItems.forEach(item => {
+      if (item.category) {
+        categoryCounts[item.category] = (categoryCounts[item.category] || 0) + 1;
+      }
+    });
+
+    const formattedData = Object.entries(categoryCounts).map(([category, count]) => ({
+      category,
+      count
+    }));
+
+    return { data: formattedData, error: null };
+  } catch (error) {
+    return { data: null, error: 'Errore nel recupero della distribuzione per categoria' };
   }
 }
 }

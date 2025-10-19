@@ -1,3 +1,4 @@
+import CategoryDistributionChart from '@/components/visualization/categoryDistributionChart';
 import HeatmapCalendar from '@/components/visualization/heatmap';
 import TopRenewedChart from '@/components/visualization/topRenewedChart';
 import { WelcomeScreen } from '@/components/welcomeScreen';
@@ -28,6 +29,7 @@ const Stats = () => {
   const visualizations = [
     { id: 'heatmap', title: 'Calendario', component: <HeatmapCalendar /> },
     { id: 'top-replaced', title: 'Top 5', component: <TopRenewedChart /> },
+    { id: 'category-distribution', title: 'Categorie', component: <CategoryDistributionChart /> },
   ];
 
   const infiniteData = [

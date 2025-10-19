@@ -35,6 +35,7 @@ export default function Item() {
   const [isExpired, setIsExpired] = useState(false);
   const [isActivated, setIsActivated] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(true);
+  const [hasUserModified, setHasUserModified] = useState(false);
 
   useEffect(() => {
     checkItemStatus();
@@ -50,10 +51,20 @@ export default function Item() {
       const { data: userItems } = await ItemService.getUserItems();
       const currentItem = userItems?.find(i => i.name === item);
       
-      if (currentItem?.expired_at) {
-        const now = new Date();
-        const expiry = new Date(currentItem.expired_at);
-        setIsExpired(expiry < now);
+      if (currentItem) {
+        if (currentItem.duration_days && !hasUserModified) {
+          setCustomDuration(currentItem.duration_days.toString());
+        }
+        
+        if (currentItem.expired_at) {
+          const now = new Date();
+          const expiry = new Date(currentItem.expired_at);
+          setIsExpired(expiry < now);
+        }
+      }
+    } else {
+      if (!hasUserModified) {
+        setCustomDuration(duration?.toString() || '');
       }
     }
     
@@ -69,6 +80,11 @@ export default function Item() {
         Alert.alert('Errore', 'Impossibile aprire il link');
       }
     }
+  };
+
+  const handleDurationChange = (value: string) => {
+    setCustomDuration(value);
+    setHasUserModified(true);
   };
 
   const handleSaveDuration = () => {
@@ -89,7 +105,7 @@ export default function Item() {
     return defaultNum > 0 ? defaultNum : undefined;
   };
 
-  const canEditDuration = !isActivated;
+  const canEditDuration = !isActivated || isExpired;
 
   return (
     <AuthWrapper 
@@ -180,7 +196,7 @@ export default function Item() {
               {isEditingDuration && canEditDuration ? (
                 <TextInput
                   value={customDuration}
-                  onChangeText={setCustomDuration}
+                  onChangeText={handleDurationChange}
                   keyboardType="numeric"
                   className="bg-neutral-100 rounded-lg px-3 py-2 font-inter-medium text-center mx-2 min-w-16"
                   placeholder={duration?.toString() || "30"}
@@ -203,7 +219,9 @@ export default function Item() {
                 <Ionicons name="information-circle" size={16} color="#f59e0b" />
                 <Text className="text-warning text-sm font-inter ml-2 flex-1">
                   {canEditDuration 
-                    ? 'Raccomandazione basata su studi scientifici. Puoi personalizzare secondo le tue esigenze.'
+                    ? isExpired 
+                      ? 'Puoi mantenere la stessa durata o modificarla prima di rinnovare l\'oggetto.'
+                      : 'Raccomandazione basata su studi scientifici. Puoi personalizzare secondo le tue esigenze.'
                     : 'La frequenza non può essere modificata quando l\'oggetto è attivo. Disattiva l\'oggetto per modificare la durata.'}
                 </Text>
               </View>

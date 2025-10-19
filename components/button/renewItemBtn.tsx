@@ -50,14 +50,22 @@ const RenewItemBtn: React.FC<RenewItemBtnProps> = ({
       const { data: userItems } = await ItemService.getUserItems();
       const currentItem = userItems?.find(i => i.name === itemName);
       
-      if (currentItem?.id) {
+      if (!currentItem) {
+        Alert.alert('Errore', 'Oggetto non trovato.');
+        setIsLoading(false);
+        return;
+      }
+
+      const durationToUse = currentDuration || currentItem.duration_days;
+
+      if (currentItem.id) {
         await StatsService.recordHeatmapCompletion(currentItem.id);
         await StatsService.incrementReplacementCount(itemName);
       }
 
       await ItemService.deactivateItem(itemName);
       
-      const { success, error, item } = await ItemService.activateItem(itemName, currentDuration);
+      const { success, error, item } = await ItemService.activateItem(itemName, durationToUse);
       
       if (success && item) {
         Alert.alert(
