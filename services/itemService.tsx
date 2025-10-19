@@ -289,4 +289,31 @@ export class ItemService {
       return [];
     }
   }
+
+  static async getAllUserItemsCount(): Promise<{ data: { name: string; count: number }[] | null; error: string | null }> {
+  try {
+    const { data, error } = await supabase
+      .from('user_items')
+      .select('name');
+
+    if (error) {
+      return { data: null, error: error.message };
+    }
+
+    const countMap = new Map<string, number>();
+    data?.forEach(item => {
+      const currentCount = countMap.get(item.name) || 0;
+      countMap.set(item.name, currentCount + 1);
+    });
+
+    const result = Array.from(countMap.entries()).map(([name, count]) => ({
+      name,
+      count
+    }));
+
+    return { data: result, error: null };
+  } catch (error) {
+    return { data: null, error: 'Errore nel recupero dei dati di popolarità' };
+  }
+}
 }

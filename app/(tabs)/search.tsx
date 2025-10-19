@@ -3,10 +3,16 @@ import Filter from "@/components/filter";
 import SearchBar from "@/components/searchBar";
 import { useCatalog } from "@/hooks/useCatalog";
 import { Item } from "@/models/item";
+import { ItemService } from "@/services/itemService";
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Platform, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+interface ItemPopularity {
+  name: string;
+  count: number;
+}
 
 export default function Search() {
   const router = useRouter();
@@ -20,6 +26,26 @@ export default function Search() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterResults, setFilterResults] = useState<Item[]>([]);
   const [isFilterActive, setIsFilterActive] = useState(false);
+  const [popularityData, setPopularityData] = useState<ItemPopularity[]>([]);
+  const [loadingPopularity, setLoadingPopularity] = useState(true);
+
+  useEffect(() => {
+    fetchPopularityData();
+  }, []);
+
+  const fetchPopularityData = async () => {
+    setLoadingPopularity(true);
+    try {
+      const { data, error } = await ItemService.getAllUserItemsCount();
+      if (!error && data) {
+        setPopularityData(data);
+      }
+    } catch (error) {
+      console.error('Errore nel recupero dati popolarità:', error);
+    } finally {
+      setLoadingPopularity(false);
+    }
+  };
 
   const handleItemPress = (item: Item) => {
     router.push({
@@ -48,19 +74,36 @@ export default function Search() {
 
   const baseDataForSearch = isFilterActive ? filterResults : catalog;
 
+  const sortedByPopularity = useMemo(() => {
+    if (loadingPopularity || popularityData.length === 0) {
+      return baseDataForSearch;
+    }
+
+    return [...baseDataForSearch].sort((a, b) => {
+      const aPopularity = popularityData.find(p => p.name === a.name)?.count || 0;
+      const bPopularity = popularityData.find(p => p.name === b.name)?.count || 0;
+      
+      if (aPopularity === bPopularity) {
+        return a.name.localeCompare(b.name);
+      }
+      
+      return bPopularity - aPopularity;
+    });
+  }, [baseDataForSearch, popularityData, loadingPopularity]);
+
   const displayData = useMemo(() => {
     if (!searchQuery.trim()) {
-      return baseDataForSearch;
+      return sortedByPopularity;
     }
 
     const lowercaseQuery = searchQuery.toLowerCase();
     
-    return baseDataForSearch.filter(item => 
+    return sortedByPopularity.filter(item => 
       item.name.toLowerCase().includes(lowercaseQuery) ||
       (item.description && item.description.toLowerCase().includes(lowercaseQuery)) ||
       (item.category && item.category.toLowerCase().includes(lowercaseQuery))
     );
-  }, [searchQuery, baseDataForSearch]);
+  }, [searchQuery, sortedByPopularity]);
 
   const renderHeader = () => (
     <View className="mb-6 px-5">
@@ -76,6 +119,13 @@ export default function Search() {
     </View>
   );
 
+  const handleRefresh = async () => {
+    await Promise.all([
+      refreshCatalog(),
+      fetchPopularityData()
+    ]);
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['top']}>
       <ScrollView
@@ -83,7 +133,7 @@ export default function Search() {
         refreshControl={
           <RefreshControl
             refreshing={loading}
-            onRefresh={refreshCatalog}
+            onRefresh={handleRefresh}
             tintColor="#3b82f6"
             colors={["#3b82f6"]}
             title="Aggiornamento catalogo..."
@@ -126,7 +176,7 @@ export default function Search() {
               loading={false}
               error={error}
               onItemPress={handleItemPress}
-              onRetry={refreshCatalog}
+              onRetry={handleRefresh}
             />
           </View>
         </View>
