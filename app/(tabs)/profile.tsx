@@ -2,18 +2,17 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   Text,
-  TouchableOpacity,
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AuthForm from '../../components/authForm';
+import LogoutBtn from '../../components/button/logoutBtn';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function Profile() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
 
   if (!user && !loading) {
     return (
@@ -34,33 +33,6 @@ export default function Profile() {
       </SafeAreaView>
     );
   }
-
-  const handleLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Sei sicuro di voler uscire dal tuo account?",
-      [
-        {
-          text: "Annulla",
-          style: "cancel"
-        },
-        {
-          text: "Esci",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await signOut();
-            } catch (error) {
-              Alert.alert(
-                "Errore",
-                "Si è verificato un errore durante il logout. Riprova."
-              );
-            }
-          }
-        }
-      ]
-    );
-  };
 
   const getUserInitials = (nickname: string): string => {
     if (!nickname) return "U";
@@ -88,7 +60,6 @@ export default function Profile() {
   return (
     <SafeAreaView className="flex-1 bg-neutral-50">
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Header */}
         <View className="bg-primary-500 px-6 pt-8 pb-12">
           <Text className="text-white text-2xl font-bold text-center mb-2">
             Il mio Profilo
@@ -98,7 +69,6 @@ export default function Profile() {
           </Text>
         </View>
 
-        {/* User Avatar Section */}
         <View className="px-6 -mt-8">
           <View className="bg-white rounded-2xl shadow-sm p-6 mb-6">
             <View className="items-center mb-6">
@@ -139,7 +109,6 @@ export default function Profile() {
           </View>
         </View>
 
-        {/* Account Information */}
         <View className="px-6 mb-6">
           <View className="bg-white rounded-2xl shadow-sm p-6">
             <Text className="text-lg font-semibold text-neutral-800 mb-4">
@@ -185,20 +154,8 @@ export default function Profile() {
           </View>
         </View>
 
-        {/* Logout Button */}
         <View className="px-6 pb-8">
-          <TouchableOpacity
-            className="bg-red-500 rounded-xl py-4 shadow-sm"
-            onPress={handleLogout}
-            activeOpacity={0.8}
-          >
-            <View className="flex-row items-center justify-center">
-              <Ionicons name="log-out-outline" size={20} color="white" />
-              <Text className="text-white font-semibold text-lg ml-2">
-                Esci dall'account
-              </Text>
-            </View>
-          </TouchableOpacity>
+          <LogoutBtn />
         </View>
       </ScrollView>
     </SafeAreaView>

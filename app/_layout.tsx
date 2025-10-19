@@ -1,15 +1,24 @@
 import { LocationService } from '@/services/locationService';
 import { Stack } from "expo-router";
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AuthProvider } from '../contexts/authContext';
 import './globals.css';
 
 export default function RootLayout() {
+  const [hasCheckedPermissions, setHasCheckedPermissions] = useState(false);
   
   useEffect(() => {
     const initializeLocationTracking = async () => {
-      await LocationService.initializeBackgroundTracking();
+      const success = await LocationService.initializeBackgroundTracking();
+      
+      if (success) {
+        setTimeout(() => {
+          LocationService.checkAndPromptForAlwaysPermission();
+        }, 5000);
+      }
+      
+      setHasCheckedPermissions(true);
     };
 
     initializeLocationTracking();
@@ -17,9 +26,7 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      
       <StatusBar style="auto" />
-      
       <Stack>
         <Stack.Screen 
           name="(tabs)" 

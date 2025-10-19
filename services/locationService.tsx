@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
+import { Alert, Platform } from 'react-native';
 import { ItemService } from './itemService';
 import { NotificationService } from './notificationService';
 
@@ -63,11 +64,45 @@ export class LocationService {
   }
 
   static async initializeBackgroundTracking(): Promise<boolean> {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') return false;
+    if (Platform.OS !== 'ios') {
+      return false;
+    }
 
-    const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
-    if (backgroundStatus !== 'granted') return false;
+    const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
+    
+    if (foregroundStatus !== 'granted') {
+      Alert.alert(
+        'Permesso Richiesto',
+        'Per ricevere notifiche quando sei vicino a negozi, abilita la posizione nelle impostazioni.',
+        [{ text: 'OK' }]
+      );
+      return false;
+    }
+
+    const { status: backgroundStatus } = await Location.getBackgroundPermissionsAsync();
+
+    if (backgroundStatus !== 'granted') {
+      const { status: newBackgroundStatus } = await Location.requestBackgroundPermissionsAsync();
+      
+      if (newBackgroundStatus !== 'granted') {
+        Alert.alert(
+          'Permesso Background Necessario',
+          'Per funzionare correttamente, questa funzione richiede l\'accesso alla posizione "Sempre".\n\nVai in Impostazioni > Privacy > Localizzazione > Spazzolino e seleziona "Sempre".',
+          [
+            { text: 'Annulla', style: 'cancel' },
+            { 
+              text: 'Apri Impostazioni', 
+              onPress: () => {
+                if (Platform.OS === 'ios') {
+                  Location.enableNetworkProviderAsync();
+                }
+              }
+            }
+          ]
+        );
+        return false;
+      }
+    }
 
     await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
       accuracy: Location.Accuracy.Balanced,
@@ -77,10 +112,31 @@ export class LocationService {
         notificationTitle: 'Spazzolino',
         notificationBody: 'Monitoraggio promemoria attivo',
       },
+      showsBackgroundLocationIndicator: true,
     });
 
     await this.setTrackingEnabled(true);
     return true;
+  }
+
+  static async checkAndPromptForAlwaysPermission(): Promise<void> {
+    const { status } = await Location.getBackgroundPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert(
+        'Migliora l\'Esperienza',
+        'Per ricevere notifiche anche quando l\'app è chiusa, abilita "Consenti sempre" nelle impostazioni di localizzazione.',
+        [
+          { text: 'Più tardi', style: 'cancel' },
+          { 
+            text: 'Vai a Impostazioni',
+            onPress: async () => {
+              await Location.requestBackgroundPermissionsAsync();
+            }
+          }
+        ]
+      );
+    }
   }
 
   static async stopBackgroundTracking(): Promise<void> {
