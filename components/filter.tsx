@@ -9,6 +9,7 @@ interface FilterProps {
   onFilterChange: (filteredData: Item[]) => void;
   allItems: Item[];
   onReset: () => void;
+  isActive?: boolean;
 }
 
 const CATEGORIES: Item['category'][] = [
@@ -23,7 +24,7 @@ const CATEGORY_LABELS: Record<Item['category'], string> = {
   cucina: 'Cucina'
 };
 
-export default function Filter({ onFilterChange, allItems, onReset }: FilterProps) {
+export default function Filter({ onFilterChange, allItems, onReset, isActive = false }: FilterProps) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Item['category'][]>([]);
   const [sortOption, setSortOption] = useState<SortOption>('none');
@@ -82,9 +83,17 @@ export default function Filter({ onFilterChange, allItems, onReset }: FilterProp
     <>
       <Pressable
         onPress={() => setIsModalVisible(true)}
-        className="w-12 h-12 bg-neutral-100 rounded-xl items-center justify-center active:bg-neutral-200"
+        className={`w-12 h-12 rounded-xl items-center justify-center ${
+          isActive 
+            ? 'bg-primary-500 active:bg-primary-600' 
+            : 'bg-neutral-100 active:bg-neutral-200'
+        }`}
       >
-        <Ionicons name="filter" size={20} color="#737373" />
+        <Ionicons 
+          name="filter" 
+          size={20} 
+          color={isActive ? "#ffffff" : "#737373"} 
+        />
       </Pressable>
 
       <Modal

@@ -114,6 +114,7 @@ export default function Search() {
                   onFilterChange={handleFilterChange}
                   allItems={catalog}
                   onReset={handleResetFilter}
+                  isActive={isFilterActive}
                 />
               </View>
             </View>

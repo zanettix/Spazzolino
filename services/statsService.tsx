@@ -90,4 +90,99 @@ export class StatsService {
       return { data: null, error: 'Errore imprevisto nel recupero dati heatmap' };
     }
   }
+
+  static async getTopReplacedItems(limit: number = 5): Promise<{ 
+  data: Array<{
+    name: string;
+    times: number;
+    category: string;
+    icon: string;
+    icon_family: string;
+  }> | null; 
+  error: string | null 
+}> {
+  try {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return { data: null, error: 'Utente non autenticato' };
+    }
+
+    const { data, error } = await supabase
+      .from('how_many_times')
+      .select(`
+        name,
+        times,
+        catalog!how_many_times_name_fkey (
+          category,
+          icon,
+          icon_family
+        )
+      `)
+      .eq('user', user.id)
+      .order('times', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      return { data: null, error: error.message };
+    }
+
+    const formattedData = data?.map(item => ({
+      name: item.name,
+      times: item.times,
+      category: (item.catalog as any)?.[0]?.category || '',
+      icon: (item.catalog as any)?.[0]?.icon || '',
+      icon_family: (item.catalog as any)?.[0]?.icon_family || ''
+    })) || [];
+
+    return { data: formattedData, error: null };
+  } catch (error) {
+    return { data: null, error: 'Errore nel recupero degli oggetti più sostituiti' };
+  }
+}
+
+static async incrementReplacementCount(itemName: string): Promise<{ success: boolean; error: string | null }> {
+  try {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return { success: false, error: 'Utente non autenticato' };
+    }
+
+    const { data: existing } = await supabase
+      .from('how_many_times')
+      .select('times')
+      .eq('user', user.id)
+      .eq('name', itemName)
+      .single();
+
+    if (existing) {
+      const { error } = await supabase
+        .from('how_many_times')
+        .update({ times: existing.times + 1 })
+        .eq('user', user.id)
+        .eq('name', itemName);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    } else {
+      const { error } = await supabase
+        .from('how_many_times')
+        .insert({
+          user: user.id,
+          name: itemName,
+          times: 1
+        });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    }
+
+    return { success: true, error: null };
+  } catch (error) {
+    return { success: false, error: 'Errore nell\'incremento del contatore' };
+  }
+}
 }

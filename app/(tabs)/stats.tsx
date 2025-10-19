@@ -1,5 +1,5 @@
-import StatsOverview from '@/components/visualization/barChart';
 import HeatmapCalendar from '@/components/visualization/heatmap';
+import TopRenewedChart from '@/components/visualization/topRenewedChart';
 import { WelcomeScreen } from '@/components/welcomeScreen';
 import { useAuth } from '@/hooks/useAuth';
 import { useRef, useState } from 'react';
@@ -26,8 +26,8 @@ const Stats = () => {
   }
 
   const visualizations = [
-    { id: 'overview', title: 'Riepilogo', component: <StatsOverview /> },
     { id: 'heatmap', title: 'Calendario', component: <HeatmapCalendar /> },
+    { id: 'top-replaced', title: 'Top 5', component: <TopRenewedChart /> },
   ];
 
   const infiniteData = [

@@ -52,6 +52,7 @@ const RenewItemBtn: React.FC<RenewItemBtnProps> = ({
       
       if (currentItem?.id) {
         await StatsService.recordHeatmapCompletion(currentItem.id);
+        await StatsService.incrementReplacementCount(itemName);
       }
 
       await ItemService.deactivateItem(itemName);
@@ -136,7 +137,7 @@ const RenewItemBtn: React.FC<RenewItemBtnProps> = ({
             <Ionicons name="refresh" size={24} color="white" />
           )}
           <Text className="text-white font-inter-semibold text-lg ml-3">
-            {isLoading ? "Elaborazione..." : "Oggetto Scaduto - Rinnova"}
+            {isLoading ? "Elaborazione..." : "Oggetto scaduto"}
           </Text>
         </View>
       </TouchableOpacity>

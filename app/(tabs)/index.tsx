@@ -161,6 +161,7 @@ export default function Index() {
               onFilterChange={handleFilterChange}
               allItems={userItems}
               onReset={handleResetFilter}
+              isActive={isFilterActive}
             />
           </View>
         </View>
