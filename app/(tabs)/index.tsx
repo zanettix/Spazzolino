@@ -1,11 +1,12 @@
 import { CameraScanner } from "@/components/cameraScanner";
+import Filter from "@/components/filter";
 import { ItemPreview } from "@/components/itemPreview";
 import { WelcomeScreen } from "@/components/welcomeScreen";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserItems } from "@/hooks/useItems";
 import { Item } from "@/models/item";
 import { useRouter } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Platform, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -18,6 +19,9 @@ export default function Index() {
     error, 
     refreshUserItems
   } = useUserItems();
+
+  const [filterResults, setFilterResults] = useState<Item[]>([]);
+  const [isFilterActive, setIsFilterActive] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -40,16 +44,28 @@ export default function Index() {
     });
   };
 
+  const handleFilterChange = (filtered: Item[]) => {
+    setFilterResults(filtered);
+    setIsFilterActive(true);
+  };
+
+  const handleResetFilter = () => {
+    setIsFilterActive(false);
+    setFilterResults([]);
+  };
+
+  const displayData = isFilterActive ? filterResults : userItems;
+
   const getItemStats = () => {
-    if (!userItems.length) return null;
+    if (!displayData.length) return null;
 
     const now = new Date();
-    const expired = userItems.filter(item => {
+    const expired = displayData.filter(item => {
       if (!item.expired_at) return false;
       return new Date(item.expired_at) <= now;
     }).length;
 
-    const expiringSoon = userItems.filter(item => {
+    const expiringSoon = displayData.filter(item => {
       if (!item.expired_at) return false;
       const expiry = new Date(item.expired_at);
       const diffTime = expiry.getTime() - now.getTime();
@@ -57,7 +73,7 @@ export default function Index() {
       return diffDays > 0 && diffDays <= 7;
     }).length;
 
-    return { expired, expiringSoon, total: userItems.length };
+    return { expired, expiringSoon, total: displayData.length };
   };
 
   const stats = getItemStats();
@@ -120,7 +136,7 @@ export default function Index() {
         
         <View className="flex-1">
           <ItemPreview
-            items={userItems}
+            items={displayData}
             loading={false}
             error={error}
             onItemPress={handleItemPress}
@@ -128,6 +144,27 @@ export default function Index() {
           />
         </View>
       </ScrollView>
+
+      {userItems.length > 0 && (
+        <View 
+          style={{
+            position: 'absolute',
+            bottom: Platform.OS === 'ios' ? 90 : 70,
+            left: 0,
+            right: 0,
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <View className="bg-white rounded-full shadow-lg" style={{ elevation: 8 }}>
+            <Filter 
+              onFilterChange={handleFilterChange}
+              allItems={userItems}
+              onReset={handleResetFilter}
+            />
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
