@@ -1,6 +1,8 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { Item } from '../models/item';
+import { NearbyPlace } from './locationService';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -14,6 +16,8 @@ Notifications.setNotificationHandler({
 
 export class NotificationService {
   
+  private static LAST_LOCATION_NOTIFICATION_KEY = 'lastLocationNotification';
+
   static async initializeNotifications(): Promise<boolean> {
     if (Platform.OS !== 'ios') {
       return false;
@@ -216,6 +220,63 @@ export class NotificationService {
       };
     } catch (error) {
       return { success: false, synchronized: 0, error: 'Errore imprevisto nella sincronizzazione' };
+    }
+  }
+
+  static async canSendLocationNotificationToday(): Promise<boolean> {
+    try {
+      const lastNotification = await AsyncStorage.getItem(this.LAST_LOCATION_NOTIFICATION_KEY);
+      
+      if (!lastNotification) return true;
+
+      const lastDate = new Date(lastNotification);
+      const today = new Date();
+      
+      lastDate.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+
+      return lastDate.getTime() !== today.getTime();
+    } catch (error) {
+      return true;
+    }
+  }
+
+  static async sendLocationNotification(
+    place: NearbyPlace,
+    expiringItems: Item[]
+  ): Promise<boolean> {
+    try {
+      const itemsList = expiringItems
+        .slice(0, 3)
+        .map(item => item.name)
+        .join(', ');
+
+      const moreItems = expiringItems.length > 3 ? ` e altri ${expiringItems.length - 3}` : '';
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: `Sei vicino a ${place.name}`,
+          body: `Hai ${expiringItems.length} oggetti in scadenza: ${itemsList}${moreItems}`,
+          data: { 
+            type: 'location',
+            placeId: place.id,
+            placeName: place.name,
+            placeType: place.type,
+            itemCount: expiringItems.length
+          },
+          sound: true,
+        },
+        trigger: null,
+      });
+
+      await AsyncStorage.setItem(
+        this.LAST_LOCATION_NOTIFICATION_KEY,
+        new Date().toISOString()
+      );
+
+      return true;
+    } catch (error) {
+      return false;
     }
   }
 }

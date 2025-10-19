@@ -12,7 +12,12 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.spazzolino.app",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": ["remote-notification", "location"],
+        "NSCameraUsageDescription": "L'app ha bisogno di accedere alla fotocamera per scansionare e riconoscere gli oggetti da sostituire.",
+        "NSPhotoLibraryUsageDescription": "L'app ha bisogno di accedere alla galleria per selezionare foto di oggetti da riconoscere.",
+        "NSMicrophoneUsageDescription": "L'app potrebbe aver bisogno del microfono per registrare video (opzionale).",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Spazzolino usa la tua posizione per inviarti promemoria quando sei vicino a negozi dove puoi acquistare oggetti in scadenza.",
+        "NSLocationWhenInUseUsageDescription": "Spazzolino usa la tua posizione per inviarti promemoria quando sei vicino a negozi dove puoi acquistare oggetti in scadenza."
       }
     },
     "web": {
@@ -35,6 +40,26 @@
       ],
       [
         "expo-notifications"
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "L'app ha bisogno di accedere alla fotocamera per scansionare gli oggetti.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "L'app ha bisogno di accedere alla galleria per selezionare foto di oggetti."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Spazzolino usa la tua posizione per inviarti promemoria quando sei vicino a negozi dove puoi acquistare oggetti in scadenza."
+        }
       ]
     ],
     "experiments": {

@@ -1,3 +1,4 @@
+// services/itemService.ts
 import { Item } from '@/models/item';
 import { supabase } from '@/utils/supabase';
 import { NotificationService } from './notificationService';
@@ -5,42 +6,42 @@ import { NotificationService } from './notificationService';
 export class ItemService {
 
   static async getCatalog(): Promise<{ data: Item[] | null; error: string | null }> {
-      const { data, error } = await supabase
-        .from('catalog')
-        .select('*')
-        .order('category, name');
+    const { data, error } = await supabase
+      .from('catalog')
+      .select('*')
+      .order('category, name');
 
-      if (error) {
-        return { data: null, error: error.message };
-      }
-      return { data: data || [], error: null };
+    if (error) {
+      return { data: null, error: error.message };
+    }
+    return { data: data || [], error: null };
   }
 
   static async getCatalogByCategory(category: Item['category']): Promise<{ data: Item[] | null; error: string | null }> {
-      const { data, error } = await supabase
-        .from('catalog')
-        .select('*')
-        .eq('category', category)
-        .order('name');
+    const { data, error } = await supabase
+      .from('catalog')
+      .select('*')
+      .eq('category', category)
+      .order('name');
 
-      if (error) {
-        return { data: null, error: error.message };
-      }
-      return { data: data || [], error: null };
+    if (error) {
+      return { data: null, error: error.message };
+    }
+    return { data: data || [], error: null };
   }
 
   static async searchCatalog(query: string): Promise<{ data: Item[] | null; error: string | null }> {
-        const { data, error } = await supabase
-        .from('catalog')
-        .select('*')
-        .or(`name.ilike.*${query}*,description.ilike.*${query}*`)
-        .order('name');
+    const { data, error } = await supabase
+      .from('catalog')
+      .select('*')
+      .or(`name.ilike.*${query}*,description.ilike.*${query}*`)
+      .order('name');
 
-        if (error) {
-        return { data: null, error: error.message };
-        }
-        return { data: data || [], error: null };
+    if (error) {
+      return { data: null, error: error.message };
     }
+    return { data: data || [], error: null };
+  }
 
   static async searchUserItem(query: string, userId?: string): Promise<{ data: any[] | null; error: string | null }> {
     const { data, error } = await supabase
@@ -195,16 +196,16 @@ export class ItemService {
   }
 
   static async isItemActivated(itemName: string): Promise<{ activated: boolean; error: string | null }> { 
-        const { data, error } = await supabase
-          .from('user_items')
-          .select('name')
-          .eq('name', itemName);
+    const { data, error } = await supabase
+      .from('user_items')
+      .select('name')
+      .eq('name', itemName);
 
-        if (error) {
-          return { activated: false, error: error.message };
-        }
-        
-        return { activated: data && data.length > 0, error: null };
+    if (error) {
+      return { activated: false, error: error.message };
+    }
+    
+    return { activated: data && data.length > 0, error: null };
   }
 
   static async getUserItems(): Promise<{ data: Item[] | null; error: string | null }> {
@@ -245,6 +246,47 @@ export class ItemService {
       };
     } catch (error) {
       return { data: null, error: 'Errore imprevisto nel recupero oggetti utente' };
+    }
+  }
+
+  static async getExpiringItems(): Promise<Item[]> {
+    try {
+      const sevenDaysFromNow = new Date();
+      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
+      const { data, error } = await supabase
+        .from('user_items')
+        .select(`
+          *,
+          catalog!user_items_name_fkey (
+            category,
+            description,
+            link,
+            icon,
+            icon_family
+          )
+        `)
+        .lte('expired_at', sevenDaysFromNow.toISOString())
+        .gte('expired_at', new Date().toISOString())
+        .order('expired_at', { ascending: true });
+
+      if (error) return [];
+
+      return data.map(item => ({
+        id: item.id,
+        name: item.name,
+        category: item.catalog.category,
+        description: item.catalog.description,
+        link: item.catalog.link,
+        icon: item.catalog.icon,
+        icon_family: item.catalog.icon_family,
+        created_at: item.created_at,
+        duration_days: item.duration_days,
+        expired_at: item.expired_at,
+        owner: item.owner
+      }));
+    } catch (error) {
+      return [];
     }
   }
 }
