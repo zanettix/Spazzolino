@@ -1,3 +1,4 @@
+import { CameraScanner } from "@/components/cameraScanner";
 import { ItemPreview } from "@/components/itemPreview";
 import { WelcomeScreen } from "@/components/welcomeScreen";
 import { useAuth } from "@/hooks/useAuth";
@@ -63,22 +64,28 @@ export default function Index() {
 
   const renderHeader = () => (
     <View className="mb-6 px-5 py-4">
-      <Text className="text-2xl font-bold text-neutral-900 text-center mb-1">
-        I Miei Oggetti
-      </Text>
+      <View className="flex-row items-center justify-center">
+        <Text className="text-2xl font-bold text-neutral-900 text-center">
+          I Miei Oggetti
+        </Text>
+        
+        <View style={{ position: 'absolute', right: 0 }}>
+          {user && <CameraScanner />}
+        </View>
+      </View>
       
       {loading ? (
-        <Text className="text-base text-neutral-600 text-center">
+        <Text className="text-base text-neutral-600 text-center mt-1">
           Caricamento...
         </Text>
       ) : stats ? (
-        <View className="flex-row items-center justify-center flex-wrap">
+        <View className="flex-row items-center justify-center flex-wrap mt-1">
           <Text className="text-sm text-neutral-600 mx-1">
             {stats.total} oggett{stats.total === 1 ? 'o attivo' : 'i attivi'}
           </Text>
         </View>
       ) : (
-        <Text className="text-base text-neutral-600 text-center">
+        <Text className="text-base text-neutral-600 text-center mt-1">
           Nessun oggetto attivo
         </Text>
       )}
