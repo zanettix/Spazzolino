@@ -1,12 +1,13 @@
 import { CatalogPreview } from "@/components/catalogPreview";
 import Filter from "@/components/filter";
+import { RequestItemModal } from "@/components/requestModal";
 import SearchBar from "@/components/searchBar";
 import { useCatalog } from "@/hooks/useCatalog";
 import { Item } from "@/models/item";
 import { ItemService } from "@/services/itemService";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { Platform, RefreshControl, ScrollView, Text, View } from "react-native";
+import { Platform, RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 interface ItemPopularity {
@@ -28,6 +29,7 @@ export default function Search() {
   const [isFilterActive, setIsFilterActive] = useState(false);
   const [popularityData, setPopularityData] = useState<ItemPopularity[]>([]);
   const [loadingPopularity, setLoadingPopularity] = useState(true);
+  const [showRequestModal, setShowRequestModal] = useState(false);
 
   useEffect(() => {
     fetchPopularityData();
@@ -40,8 +42,6 @@ export default function Search() {
       if (!error && data) {
         setPopularityData(data);
       }
-    } catch (error) {
-      console.error('Errore nel recupero dati popolarità:', error);
     } finally {
       setLoadingPopularity(false);
     }
@@ -119,6 +119,38 @@ export default function Search() {
     </View>
   );
 
+  const renderRequestButton = () => (
+    <View className="px-5 py-4">
+      <TouchableOpacity
+        className="bg-white border border-primary-500 rounded-lg py-2.5 px-4 flex-row items-center justify-center"
+        onPress={() => setShowRequestModal(true)}
+        activeOpacity={0.7}
+      >
+        <Text className="text-neutral-600 text-xs font-medium">
+          Suggerisci un oggetto
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderEmptyState = () => (
+    <View className="flex-1 justify-center items-center py-12 px-5">
+      <Text className="text-lg font-medium text-neutral-500 mb-2">Nessun risultato</Text>
+      <Text className="text-sm text-neutral-400 text-center mb-6">
+        Non trovi il tuo oggetto nel catalogo? Suggeriscilo e lo valuteremo.
+      </Text>
+      <TouchableOpacity
+        className="bg-primary-500 px-6 py-3 rounded-xl flex-row items-center"
+        onPress={() => setShowRequestModal(true)}
+        activeOpacity={0.7}
+      >
+        <Text className="text-white font-semibold text-base">
+          Suggerisci un nuovo oggetto
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   const handleRefresh = async () => {
     await Promise.all([
       refreshCatalog(),
@@ -171,16 +203,29 @@ export default function Search() {
           )}
           
           <View className="flex-1">
-            <CatalogPreview
-              items={displayData}
-              loading={false}
-              error={error}
-              onItemPress={handleItemPress}
-              onRetry={handleRefresh}
-            />
+            {!loading && !error && displayData.length === 0 ? (
+              renderEmptyState()
+            ) : (
+              <>
+                <CatalogPreview
+                  items={displayData}
+                  loading={false}
+                  error={error}
+                  onItemPress={handleItemPress}
+                  onRetry={handleRefresh}
+                />
+                {!loading && !error && displayData.length > 0 && renderRequestButton()}
+              </>
+            )}
           </View>
         </View>
       </ScrollView>
+
+      <RequestItemModal 
+        visible={showRequestModal}
+        onClose={() => setShowRequestModal(false)}
+        onSuccess={refreshCatalog}
+      />
     </SafeAreaView>
   );
 }

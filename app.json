@@ -12,7 +12,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.spazzolino.app",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification", "location"],
+        "UIBackgroundModes": [
+          "remote-notification",
+          "location"
+        ],
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Spazzolino usa la tua posizione per inviarti promemoria quando sei vicino a negozi dove puoi acquistare oggetti in scadenza, anche quando l'app è chiusa.",
         "NSLocationWhenInUseUsageDescription": "Spazzolino usa la tua posizione per inviarti promemoria quando sei vicino a negozi.",
         "NSLocationAlwaysUsageDescription": "Spazzolino usa la tua posizione per inviarti promemoria quando sei vicino a negozi, anche quando l'app è in background."
@@ -58,7 +61,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Spazzolino usa la tua posizione per inviarti promemoria quando sei vicino a negozi dove puoi acquistare oggetti in scadenza."
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
