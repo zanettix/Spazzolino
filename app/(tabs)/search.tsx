@@ -1,6 +1,6 @@
-import { CatalogPreview } from "@/components/catalogPreview";
 import Filter from "@/components/filter";
-import { RequestItemModal } from "@/components/requestModal";
+import { CatalogPreview } from "@/components/screen/catalogPreview";
+import { RequestItemModal } from "@/components/screen/requestScreen";
 import SearchBar from "@/components/searchBar";
 import { useCatalog } from "@/hooks/useCatalog";
 import { Item } from "@/models/item";

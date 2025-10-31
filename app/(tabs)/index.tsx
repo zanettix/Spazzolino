@@ -1,7 +1,7 @@
 import { CameraScanner } from "@/components/cameraScanner";
 import Filter from "@/components/filter";
-import { ItemPreview } from "@/components/itemPreview";
-import { WelcomeScreen } from "@/components/welcomeScreen";
+import { ItemPreview } from "@/components/screen/itemPreview";
+import { WelcomeScreen } from "@/components/screen/welcomeScreen";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserItems } from "@/hooks/useItems";
 import { Item } from "@/models/item";

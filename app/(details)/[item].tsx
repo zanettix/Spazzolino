@@ -1,6 +1,6 @@
-import AuthWrapper from '@/components/authForm';
 import ActivateItemBtn from '@/components/button/activateItemBtn';
 import RenewItemBtn from '@/components/button/renewItemBtn';
+import AuthWrapper from '@/components/screen/authForm';
 import { ItemService } from '@/services/itemService';
 import { renderIcon } from '@/utils/iconRenderer';
 import { Ionicons } from '@expo/vector-icons';
@@ -103,6 +103,10 @@ export default function Item() {
     }
     const defaultNum = parseInt(duration?.toString() || '0');
     return defaultNum > 0 ? defaultNum : undefined;
+  };
+
+  const handleItemStateChange = async () => {
+    await checkItemStatus();
   };
 
   const canEditDuration = !isActivated || isExpired;
@@ -233,11 +237,13 @@ export default function Item() {
               <RenewItemBtn
                 itemName={item?.toString() || ''}
                 currentDuration={getFinalDuration()}
+                onSuccess={handleItemStateChange}
               />
             ) : (
               <ActivateItemBtn
                 itemName={item?.toString() || ''}
                 customDuration={getFinalDuration()}
+                onSuccess={handleItemStateChange}
               />
             )}
           </View>

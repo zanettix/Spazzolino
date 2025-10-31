@@ -8,12 +8,14 @@ interface ActivateItemBtnProps {
   itemName: string;
   customDuration?: number;
   disabled?: boolean;
+  onSuccess?: () => void | Promise<void>;
 }
 
 const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
   itemName,
   customDuration,
-  disabled = false
+  disabled = false,
+  onSuccess
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isActivated, setIsActivated] = useState(false);
@@ -30,7 +32,6 @@ const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
     const { activated, error } = await ItemService.isItemActivated(itemName);
     
     if (error) {
-      console.error('Errore nel controllo stato oggetto:', error);
       Alert.alert('Errore', 'Impossibile verificare lo stato dell\'oggetto');
     } else {
       setIsActivated(activated);
@@ -40,7 +41,6 @@ const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
 
   const handleToggleActivation = async () => {
     if (isActivated) {
-      // Chiedi conferma per disattivare
       Alert.alert(
         "Oggetto già attivato",
         "Vuoi disattivare i promemoria per questo oggetto? Non riceverai più notifiche per questo elemento.",
@@ -55,7 +55,6 @@ const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
   };
 
   const checkNotificationPermissionsAndActivate = async () => {
-    // Verifica se l'app è inizializzata
     if (!isInitialized) {
       Alert.alert(
         'Sistema non pronto',
@@ -65,7 +64,6 @@ const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
       return;
     }
 
-    // Verifica permessi notifiche
     if (!hasPermissions) {
       Alert.alert(
         'Permessi notifiche richiesti',
@@ -108,7 +106,6 @@ const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
       return;
     }
 
-    // Se i permessi sono già concessi, attiva direttamente
     activateItem();
   };
 
@@ -116,11 +113,14 @@ const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
     setIsLoading(true);
     
     try {
-      
       const { success, error, item } = await ItemService.activateItem(itemName, customDuration);
       
       if (success && item) {
         setIsActivated(true);
+        
+        if (onSuccess) {
+          await onSuccess();
+        }
         
         Alert.alert(
           'Attivazione completata',
@@ -128,14 +128,12 @@ const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
           [{ text: 'Perfetto!' }]
         );
       } else {
-        console.error('Errore attivazione:', error);
         Alert.alert(
           'Errore durante l\'attivazione',
           error || 'Si è verificato un errore imprevisto. Riprova.'
         );
       }
     } catch (error) {
-      console.error('Errore imprevisto:', error);
       Alert.alert(
         'Errore',
         'Si è verificato un errore imprevisto durante l\'attivazione.'
@@ -149,15 +147,17 @@ const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
     setIsLoading(true);
     
     try {
-      
       const { success, error } = await ItemService.deactivateItem(itemName);
       
       if (success) {
         setIsActivated(false);
+        
+        if (onSuccess) {
+          await onSuccess();
+        }
       }
       
     } catch (error) {
-      console.error('Errore imprevisto:', error);
       Alert.alert(
         'Errore',
         'Si è verificato un errore imprevisto durante la disattivazione.'
@@ -167,7 +167,6 @@ const ActivateItemBtn: React.FC<ActivateItemBtnProps> = ({
     }
   };
 
-  // Determina contenuto del bottone
   const getButtonContent = () => {
     if (checkingStatus) {
       return {

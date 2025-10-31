@@ -7,8 +7,8 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AuthForm from '../../components/authForm';
 import LogoutBtn from '../../components/button/logoutBtn';
+import AuthForm from '../../components/screen/authForm';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function Profile() {

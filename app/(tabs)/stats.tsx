@@ -1,7 +1,7 @@
+import { WelcomeScreen } from '@/components/screen/welcomeScreen';
 import CategoryDistributionChart from '@/components/visualization/categoryDistributionChart';
 import HeatmapCalendar from '@/components/visualization/heatmap';
 import TopRenewedChart from '@/components/visualization/topRenewedChart';
-import { WelcomeScreen } from '@/components/welcomeScreen';
 import { useAuth } from '@/hooks/useAuth';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Dimensions, FlatList, Platform, ScrollView, Text, View, ViewToken } from 'react-native';

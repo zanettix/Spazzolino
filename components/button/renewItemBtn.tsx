@@ -10,12 +10,14 @@ interface RenewItemBtnProps {
   itemName: string;
   currentDuration?: number;
   disabled?: boolean;
+  onSuccess?: () => void | Promise<void>;
 }
 
 const RenewItemBtn: React.FC<RenewItemBtnProps> = ({
   itemName,
   currentDuration,
-  disabled = false
+  disabled = false,
+  onSuccess
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { hasPermissions } = useNotifications();
@@ -68,6 +70,10 @@ const RenewItemBtn: React.FC<RenewItemBtnProps> = ({
       const { success, error, item } = await ItemService.activateItem(itemName, durationToUse);
       
       if (success && item) {
+        if (onSuccess) {
+          await onSuccess();
+        }
+        
         Alert.alert(
           'Rinnovo completato',
           `${itemName} è stato rinnovato!\n\nRiceverai notifiche:\n• 7 giorni prima della scadenza\n• Il giorno della sostituzione\n\nNuova scadenza: ${new Date(item.expired_at).toLocaleDateString('it-IT')}`,
@@ -106,6 +112,10 @@ const RenewItemBtn: React.FC<RenewItemBtnProps> = ({
       const { success, error } = await ItemService.deactivateItem(itemName);
       
       if (success) {
+        if (onSuccess) {
+          await onSuccess();
+        }
+        
         Alert.alert(
           'Oggetto eliminato',
           `${itemName} è stato rimosso dai tuoi oggetti attivi.`,

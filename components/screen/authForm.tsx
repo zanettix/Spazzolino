@@ -1,3 +1,4 @@
+import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -12,7 +13,6 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../hooks/useAuth';
 
 interface AuthFormProps {
   children: React.ReactNode;
