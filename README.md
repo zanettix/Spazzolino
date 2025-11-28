@@ -1,50 +1,19 @@
-# Welcome to your Expo app 👋
+<img width="338" height="450" alt="image" src="https://github.com/user-attachments/assets/eb493ad1-121e-4b28-b50c-ba7f709b17d5" />
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A mobile app that helps you maintain hygiene and health by tracking replacement schedules for daily items like toothbrushes, kitchen sponges, filters, and more. Built for the LAM course at University of Bologna.
+## Why Spazzolino?
+Existing apps (to-do lists, reminders) are too generic and more focused on productivity. Spazzolino is different:
 
-## Get started
+- Science-based: Replacement schedules based on official studies
+- Specialized: Single focus on household item tracking
+- Simple: One-click activation
+- Educational: Expert-curated descriptions for each item
 
-1. Install dependencies
+### Key Features
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Curated catalog of 10 items with scientifically validated expiration dates
+Smart notifications: 7-day advance warning + expiration day reminder
+AI recognition: Scan items with camera using Gemini API
+Statistics: GitHub-style heatmap, top 5 items, category distribution
+Location-based alerts: Get notified when near stores with expiring items (100m radius)
+Customizable frequencies: Adapt schedules to your usage patterns
