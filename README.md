@@ -11,9 +11,9 @@ Existing apps (to-do lists, reminders) are too generic and more focused on produ
 
 ### Key Features
 
-Curated catalog of 10 items with scientifically validated expiration dates
-Smart notifications: 7-day advance warning + expiration day reminder
-AI recognition: Scan items with camera using Gemini API
-Statistics: GitHub-style heatmap, top 5 items, category distribution
-Location-based alerts: Get notified when near stores with expiring items (100m radius)
-Customizable frequencies: Adapt schedules to your usage patterns
+- Curated catalog of 10 items with scientifically validated expiration dates
+- Smart notifications: 7-day advance warning + expiration day reminder
+- AI recognition: Scan items with camera using Gemini API
+- Statistics: GitHub-style heatmap, top 5 items, category distribution
+- Location-based alerts: Get notified when near stores with expiring items (100m radius)
+- Customizable frequencies: Adapt schedules to your usage patterns
